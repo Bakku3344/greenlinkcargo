@@ -283,13 +283,13 @@ const DEFAULT_RATES = [
 const DEFAULT_SETTINGS = {qrUrl:'', ownerPin:'1234', staffPin:'0000'};
 const INTERNAL_HASH = 'staff';
 
-/* ---------------- API layer (Neon-backed, via your own serverless endpoint) ----------------
-   EDIT THIS to your deployed API's base URL, e.g. "https://cargo-api.yourname.workers.dev"
+/* ----------------  layer (Neon-backed, via your own serverless endpoint) ----------------
+   EDIT THIS to your deployed 's base URL, e.g. "https://cargo-.yourname.workers.dev"
    The API must implement:
      GET  /api/data/:key   -> { value: <any JSON> }   (404 or {value:null} if missing)
      PUT  /api/data/:key   body {value: <any JSON>}   -> upserts the row
    See neon-schema.sql and api-example/server.js for a ready-made reference implementation. */
-const API_BASE = 'https://YOUR-API-DOMAIN-HERE';
+const API_BASE = 'https://bakku3344.greenlinkcargo.github.io/index';
 
 async function apiGet(key, fallback){
   try{
