@@ -188,6 +188,25 @@
   .invoice th{text-transform:uppercase;font-size:10.5px;letter-spacing:0.05em;color:var(--ink-soft);}
   .invoice td.num,.invoice th.num{text-align:right;font-family:'JetBrains Mono',monospace;}
 
+  .sub-tabs{
+    display:flex;gap:6px;background:var(--paper-dark);
+    padding:5px;border-radius:9px;margin-bottom:22px;flex-wrap:wrap;
+  }
+  .sub-tabs button{
+    flex:1;min-width:130px;background:transparent;border:none;color:var(--ink-soft);
+    font-family:'Oswald',sans-serif;letter-spacing:0.04em;text-transform:uppercase;
+    font-size:12.5px;padding:9px 8px;border-radius:6px;cursor:pointer;
+    transition:background 0.15s, color 0.15s;
+  }
+  .sub-tabs button.active{background:var(--navy-deep);color:var(--paper);font-weight:600;}
+  .sub-tabs button:not(.active):hover{background:rgba(0,0,0,0.06);color:var(--navy-deep);}
+  .staff-row{
+    display:flex;gap:8px;align-items:center;margin-bottom:8px;
+    background:var(--paper-dark);border-radius:8px;padding:8px 10px;
+  }
+  .staff-row .sname{flex:1;font-weight:600;color:var(--navy-deep);}
+  .staff-row .spin{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-soft);letter-spacing:0.12em;background:var(--paper);padding:4px 10px;border-radius:6px;}
+  .staff-empty{font-size:12.5px;color:var(--ink-soft);padding:8px 2px 12px;}
   .settings-block{margin-bottom:26px;}
   .settings-block h3{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:0.04em;color:var(--navy-deep);margin:0 0 12px;}
   .rate-edit-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
@@ -280,16 +299,16 @@ const DEFAULT_RATES = [
   {id:'cement-bag', name:'Cement Bag', price:80},
   {id:'steel-bar', name:'Steel Bar', price:20},
 ];
-const DEFAULT_SETTINGS = {qrUrl:'', ownerPin:'1234', staffPin:'0000'};
+const DEFAULT_SETTINGS = {qrUrl:'', ownerPin:'1234', staffPin:'0000', staffUsers:[]};
 const INTERNAL_HASH = 'staff';
 
-/* ----------------  layer (Neon-backed, via your own serverless endpoint) ----------------
-   EDIT THIS to your deployed 's base URL, e.g. "https://cargo-.yourname.workers.dev"
+/* ---------------- API layer (Neon-backed, via your own serverless endpoint) ----------------
+   EDIT THIS to your deployed API's base URL, e.g. "https://cargo-api.yourname.workers.dev"
    The API must implement:
      GET  /api/data/:key   -> { value: <any JSON> }   (404 or {value:null} if missing)
      PUT  /api/data/:key   body {value: <any JSON>}   -> upserts the row
    See neon-schema.sql and api-example/server.js for a ready-made reference implementation. */
-const API_BASE = 'https://greenlinkcargo-trhl.onrender.com';
+const API_BASE = 'https://YOUR-API-DOMAIN-HERE';
 
 async function apiGet(key, fallback){
   try{
@@ -341,7 +360,7 @@ const ROLES = {
   receiver:{name:'Receiver',   desc:'Receiving cargo',                 pinField:null,        icon:'pin' },
 };
 const ROLE_TABS = {
-  owner:   [{id:'dashboard',label:'Dashboard'},{id:'reports',label:'Reports'},{id:'settings',label:'Rates & Setup'},{id:'track',label:'Track'}],
+  owner:   [{id:'dashboard',label:'Dashboard'},{id:'reports',label:'Reports'},{id:'settings',label:'Settings'},{id:'track',label:'Track'}],
   staff:   [{id:'dashboard',label:'Dashboard'},{id:'track',label:'Track'}],
   sender:  [{id:'checkin',label:'New Check-In'},{id:'track',label:'Track'}],
   receiver:[{id:'track',label:'Track'}],
@@ -356,6 +375,8 @@ let state = {
   pinTargetRole: null,
   pinError: '',
   tab: null,
+  staffName: null,
+  settingsTab: 'staff',
   shipments: [],
   rates: [],
   settings: Object.assign({}, DEFAULT_SETTINGS),
@@ -401,19 +422,30 @@ function renderGate(){
     `;
     const input = document.getElementById('pin-input');
     input.focus();
+    const grant = (staffName) => {
+      state.role = state.pinTargetRole;
+      state.staffName = staffName || null;
+      state.gateStage = 'pick';
+      state.pinError = '';
+      state.tab = DEFAULT_TAB[state.role];
+      location.hash = state.tab;
+      render();
+    };
+    const fail = () => { state.pinError = 'Incorrect PIN. Try again.'; renderGate(); };
     const tryPin = () => {
-      const expected = state.settings[r.pinField];
-      if(input.value === expected){
-        state.role = state.pinTargetRole;
-        state.gateStage = 'pick';
-        state.pinError = '';
-        state.tab = DEFAULT_TAB[state.role];
-        location.hash = state.tab;
-        render();
-      } else {
-        state.pinError = 'Incorrect PIN. Try again.';
-        renderGate();
+      const entered = input.value;
+      if(state.pinTargetRole === 'staff'){
+        const users = state.settings.staffUsers || [];
+        const match = users.find(u => u.pin === entered);
+        if(match){ grant(match.name); return; }
+        // Legacy fallback: single staff PIN, only while no staff accounts exist yet.
+        if(users.length === 0 && entered === state.settings.staffPin){ grant(null); return; }
+        fail();
+        return;
       }
+      // Owner (and any other pinField role)
+      if(entered === state.settings[r.pinField]){ grant(null); }
+      else fail();
     };
     document.getElementById('pin-submit').addEventListener('click', tryPin);
     input.addEventListener('keydown', e => { if(e.key==='Enter') tryPin(); });
@@ -449,7 +481,7 @@ function renderGate(){
 }
 
 function logoutInternal(){
-  state.role = null; state.gateStage='pick'; state.pinTargetRole=null; state.pinError=''; state.tab=null;
+  state.role = null; state.gateStage='pick'; state.pinTargetRole=null; state.pinError=''; state.tab=null; state.staffName=null;
   history.replaceState(null,'','#'+INTERNAL_HASH);
   render();
 }
@@ -486,7 +518,7 @@ function renderTabs(){
   const pill = document.getElementById('role-pill');
   if(state.entryMode === 'internal'){
     pill.style.display = 'flex';
-    document.getElementById('role-label').textContent = ROLES[state.role].name;
+    document.getElementById('role-label').textContent = ROLES[state.role].name + (state.staffName ? ' \u00b7 ' + state.staffName : '');
     document.getElementById('switch-role-btn').onclick = logoutInternal;
   } else {
     pill.style.display = 'none';
@@ -820,14 +852,105 @@ function renderReports(){
 }
 
 /* ---------------- Settings (owner only) ---------------- */
+const SETTINGS_SUBTABS = [
+  {id:'staff', label:'Staff Management'},
+  {id:'rates', label:'Rates & Setup'},
+];
+
 function renderSettings(){
   const panel = document.getElementById('panel');
+  if(!SETTINGS_SUBTABS.some(t => t.id === state.settingsTab)) state.settingsTab = 'staff';
+  const subtabs = SETTINGS_SUBTABS.map(t =>
+    `<button class="${t.id===state.settingsTab?'active':''}" data-subtab="${t.id}">${t.label}</button>`
+  ).join('');
+  panel.innerHTML = `
+    <h2>Settings</h2>
+    <p class="sub">Owner-only. Manage staff access, item prices, and app links.</p>
+    <div class="sub-tabs">${subtabs}</div>
+    <div id="settings-body"></div>
+  `;
+  panel.querySelectorAll('[data-subtab]').forEach(b => b.addEventListener('click', () => {
+    state.settingsTab = b.dataset.subtab;
+    renderSettings();
+  }));
+
+  if(state.settingsTab === 'staff') renderStaffManagement();
+  else renderRatesSetup();
+}
+
+function renderStaffManagement(){
+  const body = document.getElementById('settings-body');
+  const staffUrl = baseUrl() + '#' + INTERNAL_HASH;
+  const users = state.settings.staffUsers || [];
+  body.innerHTML = `
+    <div class="settings-block">
+      <h3>Your Owner PIN</h3>
+      <label>Owner PIN (your own sign-in)</label>
+      <input type="text" id="owner-pin-input" value="${escapeHtml(state.settings.ownerPin)}">
+      <button class="btn btn-primary" id="save-owner-pin-btn">Save Owner PIN</button>
+    </div>
+
+    <div class="settings-block">
+      <h3>Staff Accounts</h3>
+      <div id="staff-list"></div>
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-top:10px;">
+        <div style="flex:1;"><label>Staff name</label><input type="text" id="new-staff-name" placeholder="e.g. Ahmed" style="margin-bottom:0;"></div>
+        <div style="width:120px;"><label>PIN</label><input type="text" id="new-staff-pin" inputmode="numeric" placeholder="4-6 digits" style="margin-bottom:0;"></div>
+        <button class="btn btn-primary" id="add-staff-btn" style="height:44px;">Create</button>
+      </div>
+      <div class="note">Each staff member signs in at the staff link below with the PIN you set here \u2014 that grants them access to the Boat Staff portal. Share this link with your staff:</div>
+      <div class="url-box" style="margin-top:8px;"><div><div class="tag-label">Staff sign-in link</div><div class="u">${escapeHtml(staffUrl)}</div></div></div>
+    </div>
+  `;
+
+  const renderStaffList = () => {
+    const list = state.settings.staffUsers || [];
+    const el = document.getElementById('staff-list');
+    if(!list.length){ el.innerHTML = `<div class="staff-empty">No staff accounts yet. Create one below to give a staff member access.</div>`; return; }
+    el.innerHTML = list.map((u,idx) => `
+      <div class="staff-row">
+        <span class="sname">${escapeHtml(u.name)}</span>
+        <span class="spin">PIN ${escapeHtml(u.pin)}</span>
+        <button class="btn btn-danger" data-staff-del="${idx}" style="padding:8px 12px;">Remove</button>
+      </div>
+    `).join('');
+    el.querySelectorAll('[data-staff-del]').forEach(b => b.addEventListener('click', async () => {
+      state.settings.staffUsers.splice(parseInt(b.dataset.staffDel,10), 1);
+      await saveSettings(state.settings);
+      renderStaffList();
+    }));
+  };
+  renderStaffList();
+
+  document.getElementById('add-staff-btn').addEventListener('click', async () => {
+    const name = document.getElementById('new-staff-name').value.trim();
+    const pin = document.getElementById('new-staff-pin').value.trim();
+    if(!name || !pin){ alert('Enter both a name and a PIN.'); return; }
+    if(!/^\d{4,6}$/.test(pin)){ alert('PIN must be 4 to 6 digits.'); return; }
+    const users = state.settings.staffUsers || (state.settings.staffUsers = []);
+    if(pin === state.settings.ownerPin || users.some(u => u.pin === pin)){
+      alert('That PIN is already in use. Choose a different one.'); return;
+    }
+    users.push({id:'staff-'+Date.now(), name, pin});
+    await saveSettings(state.settings);
+    document.getElementById('new-staff-name').value=''; document.getElementById('new-staff-pin').value='';
+    renderStaffList();
+  });
+
+  document.getElementById('save-owner-pin-btn').addEventListener('click', async () => {
+    const val = document.getElementById('owner-pin-input').value.trim() || DEFAULT_SETTINGS.ownerPin;
+    if((state.settings.staffUsers||[]).some(u => u.pin === val)){ alert('That PIN is used by a staff account. Pick another.'); return; }
+    state.settings.ownerPin = val;
+    await saveSettings(state.settings);
+    alert('Owner PIN updated.');
+  });
+}
+
+function renderRatesSetup(){
+  const body = document.getElementById('settings-body');
   const staffUrl = baseUrl() + '#' + INTERNAL_HASH;
   const customerUrl = state.settings.qrUrl || baseUrl();
-  panel.innerHTML = `
-    <h2>Rates &amp; Setup</h2>
-    <p class="sub">Owner-only. Set item prices, PINs, and see the links for each entry point.</p>
-
+  body.innerHTML = `
     <div class="settings-block">
       <h3>App Links</h3>
       <div class="url-box"><div><div class="tag-label">Staff / Owner sign-in</div><div class="u">${escapeHtml(staffUrl)}</div></div></div>
@@ -843,16 +966,6 @@ function renderSettings(){
         <div style="width:100px;"><label>Price</label><input type="text" id="new-rate-price" style="margin-bottom:0;"></div>
         <button class="btn btn-ghost" id="add-rate-btn" style="height:44px;">Add</button>
       </div>
-    </div>
-
-    <div class="settings-block">
-      <h3>Role PINs</h3>
-      <label>Owner PIN</label>
-      <input type="text" id="owner-pin-input" value="${escapeHtml(state.settings.ownerPin)}">
-      <label>Boat Staff PIN</label>
-      <input type="text" id="staff-pin-input" value="${escapeHtml(state.settings.staffPin)}">
-      <button class="btn btn-primary" id="save-pins-btn">Save PINs</button>
-      <div class="note">This app has no server-side login \u2014 PINs are a light gate to keep casual users out of dispatch tools, not real security.</div>
     </div>
 
     <div class="settings-block">
@@ -886,13 +999,6 @@ function renderSettings(){
     await saveRates(state.rates);
     document.getElementById('new-rate-name').value=''; document.getElementById('new-rate-price').value='';
     renderRatesList();
-  });
-
-  document.getElementById('save-pins-btn').addEventListener('click', async () => {
-    state.settings.ownerPin = document.getElementById('owner-pin-input').value.trim() || DEFAULT_SETTINGS.ownerPin;
-    state.settings.staffPin = document.getElementById('staff-pin-input').value.trim() || DEFAULT_SETTINGS.staffPin;
-    await saveSettings(state.settings);
-    alert('PINs updated.');
   });
 
   document.getElementById('save-qr-btn').addEventListener('click', async () => {
