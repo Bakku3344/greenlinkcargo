@@ -1,0 +1,17 @@
+{
+  "name": "cargo-ferry-log-api",
+  "version": "1.0.0",
+  "description": "Small API layer connecting the Ferry Cargo Log app to Neon Postgres.",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}
