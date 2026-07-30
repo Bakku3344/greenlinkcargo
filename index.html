@@ -1,0 +1,2736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ferry Cargo Log</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --navy-deep:#0B3D2E;
+    --navy-mid:#14503D;
+    --teal:#29AB87;
+    --teal-light:#3FC79A;
+    --amber:#D98E04;
+    --paper:#F6F1E7;
+    --paper-dark:#EAE2D0;
+    --ink:#1C1A17;
+    --ink-soft:#5B5548;
+    --red:#B23A2F;
+    --green:#2F7A4F;
+    --line:#D8CFB8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy-deep);
+    background-image:
+      radial-gradient(circle at 10% 0%, rgba(255,255,255,0.05), transparent 40%),
+      radial-gradient(circle at 90% 100%, rgba(255,255,255,0.04), transparent 40%);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .display{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:0.03em;}
+
+  .shell{max-width:920px;margin:0 auto;padding:20px 16px 60px;}
+  header.app-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 4px 22px;flex-wrap:wrap;gap:10px;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:40px;height:40px;border-radius:6px;background:var(--amber);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    box-shadow:0 2px 0 rgba(0,0,0,0.25);
+  }
+  .brand-mark svg{width:22px;height:22px;stroke:var(--navy-deep);}
+  .brand h1{font-size:20px;color:#F6F1E7;margin:0;font-weight:600;letter-spacing:0.06em;}
+  .brand span{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;color:#9FB3C8;letter-spacing:0.14em;text-transform:uppercase;margin-top:2px;}
+
+  .role-pill{
+    display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);
+    padding:6px 6px 6px 14px;border-radius:24px;
+  }
+  .role-pill .rlabel{font-family:'JetBrains Mono',monospace;font-size:11px;color:#C7D3E0;letter-spacing:0.06em;text-transform:uppercase;}
+  .role-pill button{
+    background:var(--amber);color:var(--navy-deep);border:none;border-radius:18px;
+    padding:6px 12px;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:0.04em;
+    text-transform:uppercase;cursor:pointer;font-weight:600;
+  }
+
+  .mode-toggle{
+    display:flex;gap:6px;background:rgba(255,255,255,0.06);
+    padding:5px;border-radius:10px;margin-bottom:12px;
+  }
+  .mode-toggle button{
+    flex:1;background:transparent;border:none;color:#C7D3E0;
+    font-family:'Oswald',sans-serif;letter-spacing:0.05em;text-transform:uppercase;
+    font-size:13px;padding:12px 8px;border-radius:7px;cursor:pointer;font-weight:500;
+  }
+  .mode-toggle button.active{background:var(--amber);color:var(--navy-deep);font-weight:700;}
+  .mode-toggle button:not(.active):hover{background:rgba(255,255,255,0.08);color:#fff;}
+
+  nav.tabs{
+    display:flex;gap:6px;background:rgba(255,255,255,0.06);
+    padding:5px;border-radius:10px;margin-bottom:22px;flex-wrap:wrap;
+  }
+  nav.tabs button{
+    flex:1;min-width:110px;
+    background:transparent;border:none;color:#C7D3E0;
+    font-family:'Oswald',sans-serif;letter-spacing:0.05em;text-transform:uppercase;
+    font-size:12.5px;padding:10px 8px;border-radius:7px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    transition:background 0.15s, color 0.15s;
+  }
+  nav.tabs button.active{background:var(--amber);color:var(--navy-deep);font-weight:600;}
+  nav.tabs button:not(.active):hover{background:rgba(255,255,255,0.08);color:#fff;}
+  .badge{
+    background:var(--red);color:#fff;font-size:10px;font-family:'JetBrains Mono',monospace;
+    padding:1px 6px;border-radius:20px;min-width:16px;text-align:center;
+  }
+  nav.tabs button.active .badge{background:var(--navy-deep);color:var(--amber);}
+
+  .panel{
+    background:var(--paper);border-radius:12px;padding:26px;
+    box-shadow:0 12px 34px rgba(0,0,0,0.28);
+  }
+  .panel h2{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:0.04em;font-size:22px;margin:0 0 4px;color:var(--navy-deep);}
+  .panel .sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 22px;}
+
+  label{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);margin-bottom:5px;}
+  input[type=text],input[type=tel],input[type=password],select,textarea{
+    width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:7px;
+    font-family:'Inter',sans-serif;font-size:14.5px;background:#fff;color:var(--ink);
+    margin-bottom:16px;
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal);}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    padding:12px 20px;border-radius:8px;border:none;cursor:pointer;
+    font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:0.04em;font-size:14px;font-weight:500;
+  }
+  .btn-primary{background:var(--teal);color:#fff;}
+  .btn-primary:hover{background:var(--teal-light);}
+  .btn-amber{background:var(--amber);color:var(--navy-deep);}
+  .btn-amber:hover{filter:brightness(1.06);}
+  .btn-ghost{background:transparent;color:var(--navy-deep);border:1.5px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--navy-deep);}
+  .btn-danger{background:transparent;color:var(--red);border:1.5px solid var(--red);}
+  .btn:disabled{opacity:0.45;cursor:not-allowed;}
+
+  .tag{
+    position:relative;background:#fff;border-radius:10px;border:1.5px dashed var(--line);
+    padding:18px 18px 16px 26px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px;
+  }
+  .tag::before{
+    content:"";position:absolute;left:-9px;top:50%;transform:translateY(-50%);
+    width:18px;height:18px;border-radius:50%;background:var(--navy-deep);border:3px solid var(--paper);
+  }
+  .tag-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;}
+  .tag-code{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--navy-deep);letter-spacing:0.02em;}
+  .tag-meta{font-size:13px;color:var(--ink-soft);}
+  .status-pill{
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;
+    padding:4px 10px;border-radius:20px;font-weight:700;white-space:nowrap;
+  }
+  .status-pending{background:#FBE7C6;color:#8A5A00;}
+  .status-loaded{background:#D9F0E6;color:#1E7A5F;}
+  .status-in_transit{background:#DCE4F5;color:#2C4A8C;}
+  .status-delivered{background:#DCEBDD;color:#2F7A4F;}
+  .tag-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .tag-items{font-size:13px;color:var(--ink-soft);border-top:1px dashed var(--line);padding-top:8px;margin-top:2px;}
+  .party-block{margin-bottom:4px;}
+  .party-name{font-weight:700;font-size:14.5px;color:var(--navy-deep);}
+  .party-role{font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);font-weight:700;margin-right:6px;}
+  .party-phone{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--teal);text-decoration:none;}
+  .party-phone:active{opacity:0.7;}
+  .items-details{margin-top:4px;border-top:1px dashed var(--line);padding-top:8px;}
+  .items-details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--teal);list-style:none;}
+  .items-details summary::-webkit-details-marker{display:none;}
+  .items-details summary::before{content:'\25B8 ';}
+  .items-details[open] summary::before{content:'\25BE ';}
+  .items-details .items-body{margin-top:8px;font-size:13px;color:var(--ink-soft);}
+  .cash-box{border:1.5px solid var(--teal);border-radius:8px;padding:14px;margin-top:10px;background:#fff;}
+  .cash-box .balance{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;margin:8px 0;}
+  .share-box{border:1.5px solid var(--teal);border-radius:8px;padding:14px;margin-top:10px;background:#fff;display:flex;flex-direction:column;gap:8px;}
+  .share-box .btn{width:100%;margin-bottom:8px;}
+  .item-results{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;}
+  .item-result-row{
+    display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;
+    background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:11px 12px;
+    font-size:14px;color:var(--ink);cursor:pointer;font-family:'Inter',sans-serif;
+  }
+  .item-result-row:active{background:var(--paper-dark);border-color:var(--teal);}
+  .item-result-row .rprice{font-family:'JetBrains Mono',monospace;color:var(--ink-soft);font-size:12.5px;}
+
+  .rate-row{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;margin-bottom:8px;background:#fff;
+  }
+  .rate-row .name{font-weight:600;font-size:14px;}
+  .rate-row .price{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);}
+  .stepper{display:flex;align-items:center;gap:8px;}
+  .stepper button{
+    width:28px;height:28px;border-radius:6px;border:1.5px solid var(--line);background:#fff;
+    font-size:16px;cursor:pointer;line-height:1;
+  }
+  .stepper button:hover{border-color:var(--teal);color:var(--teal);}
+  .stepper .qty{width:26px;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;}
+
+  .total-line{
+    display:flex;justify-content:space-between;align-items:center;
+    border-top:2px solid var(--navy-deep);padding-top:12px;margin-top:6px;
+    font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:0.03em;font-size:16px;
+  }
+  .total-line .amt{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--navy-deep);}
+
+  .empty{text-align:center;padding:36px 12px;color:var(--ink-soft);font-size:14px;}
+
+  .qr-wrap{background:#fff;border:1.5px dashed var(--line);border-radius:10px;padding:20px;text-align:center;margin-bottom:18px;}
+  #qr-canvas{display:inline-block;}
+
+  .confirm-code{text-align:center;padding:24px;background:var(--navy-deep);border-radius:10px;color:#fff;margin-bottom:16px;}
+  .confirm-code .big{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700;letter-spacing:0.05em;color:var(--amber);margin:8px 0;}
+
+  .timeline{display:flex;gap:0;margin:18px 0 4px;}
+  .tl-step{flex:1;text-align:center;position:relative;}
+  .tl-dot{width:14px;height:14px;border-radius:50%;background:var(--line);margin:0 auto 6px;position:relative;z-index:1;}
+  .tl-step.done .tl-dot{background:var(--teal);}
+  .tl-step::after{content:"";position:absolute;top:6px;left:-50%;width:100%;height:2px;background:var(--line);z-index:0;}
+  .tl-step:first-child::after{display:none;}
+  .tl-step.done::after{background:var(--teal);}
+  .tl-label{font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);font-weight:600;}
+  .tl-date{font-size:10.5px;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+
+  .invoice{border:1.5px solid var(--navy-deep);border-radius:10px;padding:20px;margin-top:16px;background:#fff;}
+  .invoice table{width:100%;border-collapse:collapse;margin:14px 0;}
+  .invoice th,.invoice td{text-align:left;padding:7px 4px;font-size:13.5px;border-bottom:1px solid var(--line);}
+  .invoice th{text-transform:uppercase;font-size:10.5px;letter-spacing:0.05em;color:var(--ink-soft);}
+  .invoice td.num,.invoice th.num{text-align:right;font-family:'JetBrains Mono',monospace;}
+
+  .sub-tabs{
+    display:flex;gap:6px;background:var(--paper-dark);
+    padding:5px;border-radius:9px;margin-bottom:22px;flex-wrap:wrap;
+  }
+  .sub-tabs button{
+    flex:1;min-width:130px;background:transparent;border:none;color:var(--ink-soft);
+    font-family:'Oswald',sans-serif;letter-spacing:0.04em;text-transform:uppercase;
+    font-size:12.5px;padding:9px 8px;border-radius:6px;cursor:pointer;
+    transition:background 0.15s, color 0.15s;
+  }
+  .sub-tabs button.active{background:var(--navy-deep);color:var(--paper);font-weight:600;}
+  .sub-tabs button:not(.active):hover{background:rgba(0,0,0,0.06);color:var(--navy-deep);}
+  .staff-row{
+    display:flex;gap:8px;align-items:center;margin-bottom:8px;
+    background:var(--paper-dark);border-radius:8px;padding:8px 10px;
+  }
+  .staff-row .sname{flex:1;font-weight:600;color:var(--navy-deep);}
+  .staff-row .spin{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-soft);letter-spacing:0.12em;background:var(--paper);padding:4px 10px;border-radius:6px;}
+  .staff-empty{font-size:12.5px;color:var(--ink-soft);padding:8px 2px 12px;}
+  .settings-block{margin-bottom:26px;}
+  .settings-block h3{font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:0.04em;color:var(--navy-deep);margin:0 0 12px;}
+  .view-field{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    background:#fff;border:1.5px solid var(--line);border-radius:8px;
+    padding:11px 12px;margin-bottom:14px;
+  }
+  .view-field .vf-value{font-family:'JetBrains Mono',monospace;font-size:14.5px;color:var(--navy-deep);word-break:break-all;}
+  .view-field .vf-edit{
+    background:transparent;border:1.5px solid var(--line);border-radius:6px;
+    padding:5px 10px;font-size:11px;font-family:'Oswald',sans-serif;text-transform:uppercase;
+    letter-spacing:0.04em;color:var(--navy-deep);cursor:pointer;flex-shrink:0;
+  }
+  .view-field .vf-edit:active{background:var(--paper-dark);}
+  .view-field .vf-show{background:none;border:none;color:var(--teal);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer;margin-right:8px;padding:0;}
+  .rate-edit-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .rate-edit-row input[type=text]{margin-bottom:0;}
+  .rate-edit-row input.price-input{width:90px;}
+  .search-row{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+  .search-row input{margin-bottom:0;flex:1;min-width:180px;}
+  .filter-chip{
+    display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;
+    border:1.5px solid var(--line);background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:0.03em;
+  }
+  .filter-chip.active{background:var(--navy-deep);border-color:var(--navy-deep);color:#fff;}
+  .note{font-size:12.5px;color:var(--ink-soft);background:var(--paper-dark);border-radius:7px;padding:10px 12px;margin-top:6px;line-height:1.5;}
+  .url-box{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;
+    border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:10px;flex-wrap:wrap;
+  }
+  .url-box .u{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--navy-deep);word-break:break-all;}
+  .url-box .tag-label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);font-weight:700;}
+
+  .gate-wrap{display:flex;align-items:center;justify-content:center;min-height:70vh;}
+  .gate-card{max-width:420px;width:100%;}
+  .gate-title{text-align:center;color:#F6F1E7;margin-bottom:26px;}
+  .gate-title h1{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:0.05em;font-size:24px;margin:0 0 6px;}
+  .gate-title p{color:#9FB3C8;font-size:13px;margin:0;}
+  .role-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .role-card{
+    background:var(--paper);border-radius:12px;padding:20px 16px;text-align:center;cursor:pointer;
+    border:2px solid transparent;transition:border-color .15s, transform .1s;
+  }
+  .role-card:hover{border-color:var(--amber);transform:translateY(-2px);}
+  .role-card .ricon{
+    width:44px;height:44px;border-radius:10px;background:var(--navy-deep);margin:0 auto 10px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .role-card .ricon svg{width:22px;height:22px;stroke:var(--amber);}
+  .role-card .rname{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:0.03em;font-size:14.5px;color:var(--navy-deep);margin-bottom:3px;}
+  .role-card .rdesc{font-size:11.5px;color:var(--ink-soft);}
+  .pin-box{background:var(--paper);border-radius:12px;padding:26px;max-width:340px;margin:0 auto;text-align:center;}
+  .pin-box .rname{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:0.03em;font-size:16px;color:var(--navy-deep);margin-bottom:14px;}
+  .pin-box input{text-align:center;letter-spacing:0.4em;font-family:'JetBrains Mono',monospace;font-size:20px;}
+  .pin-error{color:var(--red);font-size:12.5px;margin:-8px 0 12px;min-height:16px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:22px;}
+  .stat-card{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:16px;}
+  .stat-card .slabel{font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);margin-bottom:6px;}
+  .stat-card .sval{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--navy-deep);}
+
+  @media print{
+    body *{visibility:hidden;}
+    .invoice, .invoice *{visibility:visible;}
+    .invoice{position:absolute;top:0;left:0;width:100%;border:none;}
+  }
+  @media (max-width:560px){
+    .brand h1{font-size:16px;}
+    nav.tabs button{font-size:11px;min-width:80px;padding:9px 5px;}
+    .role-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="app-head">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l1.5-6h15L21 17"/><path d="M5 17v2a1 1 0 001 1h12a1 1 0 001-1v-2"/><path d="M12 3v8"/><path d="M8 6l4-3 4 3"/></svg>
+      </div>
+      <div>
+        <h1>Ferry Cargo Log</h1>
+        <span id="clock">--</span>
+      </div>
+    </div>
+    <div class="role-pill" id="role-pill" style="display:none;">
+      <span class="rlabel" id="role-label"></span>
+      <button id="switch-role-btn">Log out</button>
+    </div>
+  </header>
+
+  <div class="mode-toggle" id="mode-toggle" style="display:none;"></div>
+  <nav class="tabs" id="tabs" style="display:none;"></nav>
+  <main class="panel" id="panel" style="display:none;"></main>
+  <div id="gate-area"></div>
+</div>
+
+<script>
+/* ---------------- Storage helpers ---------------- */
+const DEFAULT_RATES = [
+  {id:'small-box', name:'Small Box', price:50},
+  {id:'big-bag', name:'Big Bag', price:120},
+  {id:'cement-bag', name:'Cement Bag', price:80},
+  {id:'steel-bar', name:'Steel Bar', price:20},
+  {id:'item-a4-paper-rim', name:"A4 Paper Rim (box)", price:20},
+  {id:'item-aggregate-50kg', name:"Aggregate - 50kg (bag)", price:75},
+  {id:'item-air-compressor', name:"Air Compressor (pcs)", price:400},
+  {id:'item-air-condition', name:"Air Condition (pcs)", price:200},
+  {id:'item-air-condition-1800-btu', name:"Air Condition 1800 BTU (pcs)", price:180},
+  {id:'item-air-condition-24-btu', name:"Air Condition 24 BTU (pcs)", price:200},
+  {id:'item-alifaan-nivaafulhi', name:"Alifaan Nivaafulhi (BLT)", price:200},
+  {id:'item-alifaan-nivaafulhi-small', name:"Alifaan Nivaafulhi (Small) (BLT)", price:20},
+  {id:'item-alifaan-nivaafulhi-kuda', name:"Alifaan Nivaafulhi Kuda (BLT)", price:30},
+  {id:'item-aluminium-cladding-dhorufayi', name:"Aluminium Cladding Dhorufayi (pcs)", price:100},
+  {id:'item-aluminium-dor-frame', name:"Aluminium Dor Frame (pcs)", price:100},
+  {id:'item-aluminium-dor-frame-big', name:"Aluminium Dor Frame Big (pcs)", price:250},
+  {id:'item-aluminium-dor-glass-big', name:"Aluminium Dor Glass Big (pcs)", price:350},
+  {id:'item-aluminium-dor-glass-small', name:"Aluminium Dor Glass Small (pcs)", price:250},
+  {id:'item-aluminium-fateh', name:"Aluminium Fateh (pcs)", price:10},
+  {id:'item-aluminium-fati', name:"Aluminium Fati (Nos)", price:20},
+  {id:'item-aluminium-glass-dhorufayi-medium', name:"Aluminium Glass Dhorufayi (Medium) (pcs)", price:250},
+  {id:'item-amplifier', name:"Amplifier", price:10},
+  {id:'item-ander-lear-flooring', name:"Ander Lear Flooring (Roll)", price:30},
+  {id:'item-angel', name:"Angel (pcs)", price:30},
+  {id:'item-angle-25-x25', name:"Angle 25\"x25\" (pcs)", price:20},
+  {id:'item-bag', name:"Bag (pcs)", price:10},
+  {id:'item-banana', name:"Banana (Gandu)", price:10},
+  {id:'item-bandhu-foshi', name:"Bandhu Foshi (box)", price:10},
+  {id:'item-baspar-fathi', name:"Baspar Fathi (pcs)", price:10},
+];
+const DEFAULT_SETTINGS = {qrUrl:'', ownerPin:'1234', staffPin:'0000', ownerEmail:'', staffUsers:[], pendingStaff:[], tripDefaults:{boatContacts:'',trackingLink:'',viberLink:''}, bankAccountName:'', bankAccountNumber:''};
+const INTERNAL_HASH = 'staff';
+const OWNER_HASH = 'owner';
+
+/* ---------------- API layer (Neon-backed, via your own serverless endpoint) ----------------
+   EDIT THIS to your deployed API's base URL, e.g. "https://cargo-api.yourname.workers.dev"
+   The API must implement:
+     GET  /api/data/:key   -> { value: <any JSON> }   (404 or {value:null} if missing)
+     PUT  /api/data/:key   body {value: <any JSON>}   -> upserts the row
+   See neon-schema.sql and api-example/server.js for a ready-made reference implementation. */
+const API_BASE = 'https://greenlinkcargo-trhl.onrender.com';
+
+async function apiGet(key, fallback){
+  try{
+    const res = await fetch(`${API_BASE}/api/data/${key}`);
+    if(!res.ok) return fallback;
+    const data = await res.json();
+    return (data && data.value !== undefined && data.value !== null) ? data.value : fallback;
+  }catch(e){ console.error('apiGet failed for', key, e); return fallback; }
+}
+async function apiSet(key, value){
+  try{
+    await fetch(`${API_BASE}/api/data/${key}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ value })
+    });
+  }catch(e){ console.error('apiSet failed for', key, e); }
+}
+
+async function loadShipments(){ return await apiGet('shipments', []); }
+async function saveShipments(list){ await apiSet('shipments', list); }
+async function loadRates(){ return await apiGet('rates', DEFAULT_RATES.slice()); }
+async function saveRates(list){ await apiSet('rates', list); }
+async function loadTrips(){ return await apiGet('trips', []); }
+async function saveTrips(list){ await apiSet('trips', list); }
+async function loadSettings(){
+  const s = await apiGet('settings', {});
+  return Object.assign({}, DEFAULT_SETTINGS, s);
+}
+async function saveSettings(s){ await apiSet('settings', s); }
+
+// Always re-fetch the current settings from the database right before changing
+// them, so a stale in-memory copy (e.g. an old tab, or a page left open) can
+// never overwrite changes someone else made in the meantime.
+async function withFreshSettings(mutate){
+  const fresh = await loadSettings();
+  mutate(fresh);
+  await saveSettings(fresh);
+  state.settings = fresh;
+  return fresh;
+}
+async function withFreshTrips(mutate){
+  const fresh = await loadTrips();
+  mutate(fresh);
+  await saveTrips(fresh);
+  state.trips = fresh;
+  return fresh;
+}
+
+/* ---------------- Utilities ---------------- */
+function trackingCode(){
+  const d = new Date();
+  const ymd = d.getFullYear().toString().slice(2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  const rand = Math.random().toString(36).slice(2,6).toUpperCase();
+  return `CF-${ymd}-${rand}`;
+}
+function fmtMoney(n){ return 'MVR ' + Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtDate(iso){ if(!iso) return '\u2014'; const d = new Date(iso); return d.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); }
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function startOfWeek(){ const d = new Date(); const day = d.getDay(); const diff = d.getDate() - day + (day===0?-6:1); const s = new Date(d.setDate(diff)); s.setHours(0,0,0,0); return s; }
+function startOfToday(){ const d = new Date(); d.setHours(0,0,0,0); return d; }
+function baseUrl(){ return location.href.split('#')[0]; }
+
+// Keeps Owner/Staff signed in across a page refresh. Without this, reloading
+// while on any tab (which changes the URL hash away from #owner/#staff to
+// e.g. #dashboard) has no way to know a session was active, and falls back
+// to the public customer view. localStorage survives reloads; sessionStorage
+// would also work but wouldn't survive closing the tab, which is worse UX
+// for something like a staff member's phone left logged in.
+const SESSION_KEY = 'cfl_session_v1';
+function saveSession(gateRole, role, staffName){
+  try{ localStorage.setItem(SESSION_KEY, JSON.stringify({ gateRole, role, staffName })); }
+  catch(e){ /* localStorage unavailable (private mode etc) -- session just won't persist */ }
+}
+function loadSession(){
+  try{
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function clearSession(){
+  try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+}
+
+/* ---------------- Status flow ---------------- */
+const STATUS_STEPS = ['pending','loaded','in_transit','delivered'];
+const STATUS_LABELS = { pending:'Submitted', loaded:'Loaded', in_transit:'In Transit', delivered:'Delivered' };
+function invoiceId(){
+  const d = new Date();
+  const ymd = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  const rand = Math.random().toString(36).slice(2,6).toUpperCase();
+  return `INV-${ymd}-${rand}`;
+}
+
+// Maldivian mobile numbers are typically stored as 7-digit local numbers.
+// wa.me/Viber deep links need a full international number with no leading
+// "+" or "0" -- if what's on file already looks international (8+ digits),
+// leave it as-is; otherwise assume Maldives (960) and prefix it.
+function intlNumber(raw){
+  const digits = String(raw||'').replace(/\D/g,'');
+  if(!digits) return '';
+  return digits.length > 7 ? digits : '960' + digits;
+}
+function buildInvoiceMessage(s){
+  const lines = [
+    `Ferry Cargo Log \u2014 Invoice ${s.invoiceId || ''}`,
+    `Tracking: ${s.id}`,
+    `${s.name} \u2192 ${s.island}`,
+    '',
+    'Items:',
+    ...(s.items||[]).map(i => `${i.qty} x ${i.name} \u2014 ${fmtMoney(i.qty*i.price)}`),
+    '',
+    `Total: ${fmtMoney(s.total)}`,
+    `Status: ${s.paid ? 'Paid' : 'Unpaid'}`,
+  ];
+  return lines.join('\n');
+}
+// Normalizes a locally-stored mobile number into a full international number
+// for wa.me / viber:// links. Assumes Maldives (+960) when the number looks
+// like a bare 7-digit local number and has no country code already.
+function intlNumber(mobile){
+  let digits = (mobile || '').replace(/\D/g, '');
+  if(!digits) return '';
+  if(digits.length === 7) digits = '960' + digits;
+  return digits;
+}
+function buildInvoiceImageNode(s){
+  const node = document.createElement('div');
+  node.style.cssText = 'position:fixed;left:-9999px;top:0;width:380px;background:#ffffff;font-family:Inter,sans-serif;color:#1C1A17;padding:24px;';
+  node.innerHTML = `
+    <div style="text-align:center;margin-bottom:18px;">
+      <div style="font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;letter-spacing:0.04em;color:#0B3D2E;text-transform:uppercase;">Ferry Cargo Log</div>
+      <div style="font-size:11px;color:#8A8A8A;letter-spacing:0.08em;text-transform:uppercase;">Invoice</div>
+    </div>
+    <div style="border-top:2px solid #0B3D2E;padding-top:14px;font-size:13px;line-height:1.7;">
+      <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:#0B3D2E;">${escapeHtml(s.invoiceId || s.id)}</div>
+      <div>Tracking: ${escapeHtml(s.id)}</div>
+      <div style="margin-top:8px;"><strong>Sender:</strong> ${escapeHtml(s.name)} \u00b7 ${escapeHtml(s.mobile)}</div>
+      ${s.receiverName ? `<div><strong>Receiver:</strong> ${escapeHtml(s.receiverName)} \u00b7 ${escapeHtml(s.receiverMobile||'')}</div>` : ''}
+      <div><strong>To:</strong> ${escapeHtml(s.island)}</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:13px;">
+      <thead>
+        <tr style="border-bottom:1.5px solid #D8CFB8;">
+          <th style="text-align:left;padding:6px 0;">Item</th>
+          <th style="text-align:right;">Qty</th>
+          <th style="text-align:right;">Rate</th>
+          <th style="text-align:right;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${(s.items||[]).map(i => `
+          <tr style="border-bottom:1px solid #EAE2D0;">
+            <td style="padding:6px 0;">${escapeHtml(i.name)}</td>
+            <td style="text-align:right;">${i.qty}</td>
+            <td style="text-align:right;">${fmtMoney(i.price)}</td>
+            <td style="text-align:right;">${fmtMoney(i.qty*i.price)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    <div style="display:flex;justify-content:space-between;align-items:center;border-top:2px solid #0B3D2E;padding-top:10px;">
+      <span style="font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:15px;">Total Due</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:18px;">${fmtMoney(s.total)}</span>
+    </div>
+    <div style="margin-top:10px;font-size:12px;font-weight:700;letter-spacing:0.05em;color:${s.paid ? '#2F7A4F' : '#B23A2F'};">${s.paid ? 'PAID' : 'UNPAID'}</div>
+    ${(!s.paid && (state.settings.bankAccountName || state.settings.bankAccountNumber)) ? `
+      <div style="margin-top:16px;border-top:1px dashed #D8CFB8;padding-top:12px;font-size:12px;">
+        <div style="text-transform:uppercase;letter-spacing:0.05em;color:#8A8A8A;font-size:10.5px;margin-bottom:4px;">Pay by bank transfer to</div>
+        ${state.settings.bankAccountName ? `<div style="font-weight:700;">${escapeHtml(state.settings.bankAccountName)}</div>` : ''}
+        ${state.settings.bankAccountNumber ? `<div style="font-family:'JetBrains Mono',monospace;">${escapeHtml(state.settings.bankAccountNumber)}</div>` : ''}
+      </div>
+    ` : ''}
+  `;
+  document.body.appendChild(node);
+  return node;
+}
+
+async function shareInvoiceImage(s){
+  if(typeof html2canvas === 'undefined'){
+    alert('Could not load the image generator \u2014 check your connection and try again.');
+    return;
+  }
+  const node = buildInvoiceImageNode(s);
+  let canvas;
+  try{
+    canvas = await html2canvas(node, { scale: 2, backgroundColor: '#ffffff' });
+  } catch(e){
+    node.remove();
+    console.error(e);
+    alert('Could not generate the invoice image. Try again.');
+    return;
+  }
+  node.remove();
+
+  canvas.toBlob(async (blob) => {
+    if(!blob){ alert('Could not generate the invoice image.'); return; }
+    const filename = `invoice-${(s.invoiceId||s.id).replace(/[^a-z0-9-]/gi,'')}.png`;
+    const file = new File([blob], filename, { type: 'image/png' });
+
+    if(navigator.canShare && navigator.canShare({ files: [file] })){
+      const bankBits = [state.settings.bankAccountName, state.settings.bankAccountNumber].filter(Boolean);
+      const caption = (!s.paid && bankBits.length) ? bankBits.join(' \u00b7 ') : '';
+      try{
+        await navigator.share(caption ? { files: [file], title: caption } : { files: [file] });
+      } catch(e){
+        // User cancelled the share sheet -- not an error, do nothing.
+      }
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      alert('Your browser can\'t open the share sheet directly, so the invoice image downloaded instead \u2014 attach it manually in WhatsApp or Viber.');
+    }
+  }, 'image/png');
+}
+
+function fmtDMY(dateStr){
+  if(!dateStr) return '--/--/2026';
+  const [y,m,d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+function activeTrip(list){
+  return (list||[]).find(t => t.active) || null;
+}
+function buildAnnouncement(t){
+  const dests = (t.destinations||[]).join(', ');
+  return `Dear All,
+
+Our Next trip is from 
+${t.origin} To ${dests}
+
+Date ${fmtDMY(t.date)} Time ${t.loadingTime||'--:--'} - ${t.departureTime||'--:--'} 
+Departure, Location: ${t.location||''}
+Loading Starts at: ${t.loadingTime||''}
+
+Tracking link : ${t.trackingLink||''}
+Boat Contact Details: ${t.boatContacts||''}
+
+Viber invitation link: ${t.viberLink||''}
+
+Thankyou \ud83d\ude0a
+~GREEN LINE BOAT~`;
+}
+
+/* ---------------- App state ---------------- */
+const ROLES = {
+  owner:  { name:'Owner',      desc:'Full oversight, rates & revenue', pinField:'ownerPin', icon:'crown' },
+  staff:  { name:'Boat Staff', desc:'Log loading & unloading',         pinField:'staffPin', icon:'clipboard' },
+  sender: { name:'Sender',     desc:'Sending cargo',                   pinField:null,        icon:'box' },
+  receiver:{name:'Receiver',   desc:'Receiving cargo',                 pinField:null,        icon:'pin' },
+};
+const ROLE_TABS = {
+  owner:   [{id:'dashboard',label:'Dashboard'},{id:'trips',label:'Trips'},{id:'invoices',label:'Invoices'},{id:'reports',label:'Reports'},{id:'settings',label:'Settings'},{id:'track',label:'Track'}],
+  staff:   [{id:'dashboard',label:'Dashboard'},{id:'track',label:'Track'}],
+  sender:  [{id:'checkin',label:'New Check-In'},{id:'track',label:'Track'}],
+  receiver:[{id:'track',label:'Track'}],
+};
+const DEFAULT_TAB = { owner:'dashboard', staff:'dashboard', sender:'checkin', receiver:'track' };
+const INTERNAL_ROLES = ['owner','staff'];
+
+let state = {
+  entryMode: 'customer', // 'customer' | 'internal'
+  gateRole: null, // 'owner' | 'staff' | null (which link they entered through)
+  gateMode: 'signin', // for staff gate: 'signin' | 'request'
+  role: null,
+  gateStage: 'pick',
+  pinTargetRole: null,
+  pinError: '',
+  resetToken: null,
+  forgotMsg: '',
+  forgotError: '',
+  resetMsg: '',
+  resetError: '',
+  tab: null,
+  staffName: null,
+  settingsTab: 'staff',
+  shipments: [],
+  rates: [],
+  trips: [],
+  settings: Object.assign({}, DEFAULT_SETTINGS),
+  loadingDraft: {},
+  cashDraft: {},
+  finishDraft: {},
+  reportTripView: null,
+  reportIslandView: null,
+  addCustomerOpen: false,
+  shareDraft: {},
+  settingsEdit: { ownerPin:false, ownerEmail:false, bank:false, trip:false },
+  pinRevealed: false,
+  trackQuery: '',
+  filter: 'all',
+};
+
+async function refreshData(){
+  state.shipments = await loadShipments();
+  state.rates = await loadRates();
+  state.trips = await loadTrips();
+  state.settings = await loadSettings();
+}
+
+/* ---------------- Icons ---------------- */
+const ICONS = {
+  crown: '<path d="M3 8l4 4 5-7 5 7 4-4-2 10H5L3 8z"/><path d="M5 21h14"/>',
+  clipboard: '<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/><path d="M9 11h6M9 15h6"/>',
+  box: '<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
+  pin: '<path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+};
+
+/* ---------------- Internal gate (Owner / Boat Staff) ---------------- */
+function renderGate(){
+  document.getElementById('mode-toggle').style.display='none';
+  document.getElementById('tabs').style.display='none';
+  document.getElementById('panel').style.display='none';
+  document.getElementById('role-pill').style.display='none';
+  const area = document.getElementById('gate-area');
+
+  if(state.gateStage === 'pin' && state.pinTargetRole){
+    const r = ROLES[state.pinTargetRole];
+    area.innerHTML = `
+      <div class="gate-wrap">
+        <div class="pin-box">
+          <div class="rname">${r.name} PIN</div>
+          <input type="password" inputmode="numeric" id="pin-input" maxlength="6" placeholder="&bull;&bull;&bull;&bull;">
+          <div class="pin-error">${state.pinError}</div>
+          <button class="btn btn-primary" id="pin-submit" style="width:100%;margin-bottom:10px;">Enter</button>
+          ${state.pinTargetRole === 'owner' ? `<button class="btn btn-ghost" id="forgot-pin-link" style="width:100%;margin-bottom:10px;">Forgot PIN?</button>` : ''}
+          <button class="btn btn-ghost" id="pin-back" style="width:100%;">Back</button>
+        </div>
+      </div>
+    `;
+    const input = document.getElementById('pin-input');
+    input.focus();
+    if(state.pinTargetRole === 'owner'){
+      document.getElementById('forgot-pin-link').addEventListener('click', () => {
+        state.gateStage = 'forgot'; state.forgotError = ''; state.forgotMsg = '';
+        renderGate();
+      });
+    }
+    const grant = (staffName) => {
+      state.role = state.pinTargetRole;
+      state.staffName = staffName || null;
+      state.gateStage = 'pick';
+      state.pinError = '';
+      state.tab = DEFAULT_TAB[state.role];
+      saveSession(state.gateRole, state.role, state.staffName);
+      location.hash = state.tab;
+      render();
+    };
+    const fail = () => { state.pinError = 'Incorrect PIN. Try again.'; renderGate(); };
+    const tryPin = () => {
+      const entered = input.value;
+      if(state.pinTargetRole === 'staff'){
+        const users = state.settings.staffUsers || [];
+        const match = users.find(u => u.pin === entered);
+        if(match){ grant(match.name); return; }
+        // Legacy fallback: single staff PIN, only while no staff accounts exist yet.
+        if(users.length === 0 && entered === state.settings.staffPin){ grant(null); return; }
+        fail();
+        return;
+      }
+      // Owner (and any other pinField role)
+      if(entered === state.settings[r.pinField]){ grant(null); }
+      else fail();
+    };
+    document.getElementById('pin-submit').addEventListener('click', tryPin);
+    input.addEventListener('keydown', e => { if(e.key==='Enter') tryPin(); });
+    document.getElementById('pin-back').addEventListener('click', () => {
+      if(state.gateRole){ state.gateStage='signin'; } else { state.gateStage='pick'; }
+      state.pinError=''; renderGate();
+    });
+    return;
+  }
+
+  if(state.gateStage === 'forgot'){
+    area.innerHTML = `
+      <div class="gate-wrap">
+        <div class="pin-box">
+          <div class="rname">Reset Owner PIN</div>
+          <p class="note" style="margin-top:0;text-align:left;">Enter the Gmail address registered to the Owner account. If it matches, we'll email a link to set a new PIN.</p>
+          <input type="email" id="forgot-email-input" placeholder="you@gmail.com" style="text-align:left;letter-spacing:normal;font-family:inherit;font-size:14px;" ${state.forgotMsg ? 'disabled' : ''}>
+          <div class="pin-error">${state.forgotError || ''}</div>
+          ${state.forgotMsg ? `<div class="note" style="text-align:left;">${state.forgotMsg}</div>` : ''}
+          <button class="btn btn-primary" id="forgot-submit" style="width:100%;margin:10px 0;" ${state.forgotMsg ? 'disabled' : ''}>Send Reset Link</button>
+          <button class="btn btn-ghost" id="forgot-back" style="width:100%;">Back to PIN</button>
+        </div>
+      </div>
+    `;
+    const emailInput = document.getElementById('forgot-email-input');
+    emailInput.focus();
+    document.getElementById('forgot-submit').addEventListener('click', async () => {
+      const email = emailInput.value.trim();
+      if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        state.forgotError = 'Enter a valid email address.'; renderGate(); return;
+      }
+      state.forgotError = ''; state.forgotMsg = 'Sending\u2026';
+      renderGate();
+      try{
+        await fetch(`${API_BASE}/api/reset-pin/request`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ email })
+        });
+      }catch(e){ console.error('reset-pin request failed', e); }
+      state.forgotMsg = 'If that address is registered to the Owner account, a reset link has been sent. Check your inbox (and spam folder) \u2014 the link expires in 30 minutes.';
+      renderGate();
+    });
+    document.getElementById('forgot-back').addEventListener('click', () => {
+      state.gateStage = 'pin'; state.pinTargetRole = 'owner'; state.forgotMsg = ''; state.forgotError = '';
+      renderGate();
+    });
+    return;
+  }
+
+  if(state.gateStage === 'reset-confirm'){
+    area.innerHTML = `
+      <div class="gate-wrap">
+        <div class="pin-box">
+          <div class="rname">Set New Owner PIN</div>
+          <input type="password" inputmode="numeric" id="reset-pin-input" maxlength="6" placeholder="New PIN" ${state.resetMsg ? 'disabled' : ''}>
+          <div class="pin-error">${state.resetError || ''}</div>
+          ${state.resetMsg ? `<div class="note" style="text-align:left;">${state.resetMsg}</div>` : ''}
+          <button class="btn btn-primary" id="reset-submit" style="width:100%;margin-top:10px;" ${state.resetMsg ? 'disabled' : ''}>Set New PIN</button>
+        </div>
+      </div>
+    `;
+    const pinInput = document.getElementById('reset-pin-input');
+    pinInput.focus();
+    document.getElementById('reset-submit').addEventListener('click', async () => {
+      const newPin = pinInput.value.trim();
+      if(!/^\d{4,6}$/.test(newPin)){
+        state.resetError = 'PIN must be 4\u20136 digits.'; renderGate(); return;
+      }
+      state.resetError = ''; state.resetMsg = 'Saving\u2026';
+      renderGate();
+      try{
+        const res = await fetch(`${API_BASE}/api/reset-pin/confirm`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ token: state.resetToken, newPin })
+        });
+        const data = await res.json().catch(() => ({}));
+        if(res.ok && data.ok){
+          state.resetMsg = 'PIN updated. Taking you to sign in\u2026';
+          renderGate();
+          setTimeout(() => {
+            state.gateStage = 'pin'; state.pinTargetRole = 'owner';
+            state.resetMsg = ''; state.resetError = ''; state.resetToken = null;
+            location.hash = OWNER_HASH;
+            renderGate();
+          }, 1400);
+        } else {
+          state.resetError = data.error || 'That link is invalid or expired. Request a new one.';
+          state.resetMsg = '';
+          renderGate();
+        }
+      }catch(e){
+        console.error('reset-pin confirm failed', e);
+        state.resetError = 'Something went wrong. Try again.';
+        state.resetMsg = '';
+        renderGate();
+      }
+    });
+    return;
+  }
+
+  // Owner-specific link: go straight to the Owner PIN box, no picker.
+  if(state.gateRole === 'owner'){
+    state.pinTargetRole = 'owner';
+    state.gateStage = 'pin';
+    renderGate();
+    return;
+  }
+
+  // Staff-specific link: Sign In / Request Access toggle, no Owner card.
+  if(state.gateRole === 'staff'){
+    renderStaffGate();
+    return;
+  }
+
+  // Fallback (shouldn't normally be reached, kept for safety): generic picker.
+  area.innerHTML = `
+    <div class="gate-wrap">
+      <div class="gate-card">
+        <div class="gate-title">
+          <h1>Staff Sign-In</h1>
+          <p>This link is for internal use only</p>
+        </div>
+        <div class="role-grid">
+          ${INTERNAL_ROLES.map(key => {
+            const r = ROLES[key];
+            return `
+              <div class="role-card" data-role="${key}">
+                <div class="ricon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[r.icon]}</svg></div>
+                <div class="rname">${r.name}</div>
+                <div class="rdesc">${r.desc}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  area.querySelectorAll('.role-card').forEach(c => c.addEventListener('click', () => {
+    state.pinTargetRole = c.dataset.role; state.gateStage = 'pin'; state.pinError=''; renderGate();
+  }));
+}
+
+function renderStaffGate(){
+  const area = document.getElementById('gate-area');
+  const mode = state.gateMode || 'signin';
+
+  if(mode === 'submitted'){
+    area.innerHTML = `
+      <div class="gate-wrap">
+        <div class="gate-card">
+          <div class="gate-title">
+            <h1>Request Sent</h1>
+          </div>
+          <div class="pin-box" style="text-align:center;">
+            <div class="note" style="margin:0 0 16px;">Request sent. Wait for an owner or manager to approve you and share your PIN.</div>
+            <button class="btn btn-ghost" id="back-to-signin-btn" style="width:100%;">Back to Sign In</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('back-to-signin-btn').addEventListener('click', () => {
+      state.gateMode = 'signin'; renderStaffGate();
+    });
+    return;
+  }
+
+  area.innerHTML = `
+    <div class="gate-wrap">
+      <div class="gate-card">
+        <div class="gate-title">
+          <h1>Boat Staff</h1>
+          <p>Sign in, or request access if you're new</p>
+        </div>
+        <div class="mode-toggle" style="display:flex;margin:0 auto 16px;max-width:340px;">
+          <button class="${mode==='signin'?'active':''}" data-gm="signin" style="font-size:12px;">Sign In</button>
+          <button class="${mode==='request'?'active':''}" data-gm="request" style="font-size:12px;">Request Access</button>
+        </div>
+        <div id="staff-gate-body"></div>
+      </div>
+    </div>
+  `;
+  area.querySelectorAll('[data-gm]').forEach(b => b.addEventListener('click', () => {
+    state.gateMode = b.dataset.gm; renderStaffGate();
+  }));
+
+  const body = document.getElementById('staff-gate-body');
+  if(mode === 'signin'){
+    body.innerHTML = `
+      <div class="pin-box" style="margin:0;">
+        <div class="rname">Enter your PIN</div>
+        <input type="password" inputmode="numeric" id="staffgate-pin" maxlength="6" placeholder="&bull;&bull;&bull;&bull;">
+        <div class="pin-error" id="staffgate-error"></div>
+        <button class="btn btn-primary" id="staffgate-submit" style="width:100%;">Enter</button>
+      </div>
+    `;
+    const input = document.getElementById('staffgate-pin');
+    input.focus();
+    const tryPin = () => {
+      const entered = input.value;
+      const users = state.settings.staffUsers || [];
+      const match = users.find(u => u.pin === entered);
+      if(match || (users.length === 0 && entered === state.settings.staffPin)){
+        state.role = 'staff';
+        state.staffName = match ? match.name : null;
+        state.tab = DEFAULT_TAB.staff;
+        saveSession('staff', 'staff', state.staffName);
+        location.hash = state.tab;
+        render();
+        return;
+      }
+      document.getElementById('staffgate-error').textContent = 'Incorrect PIN. Try again.';
+    };
+    document.getElementById('staffgate-submit').addEventListener('click', tryPin);
+    input.addEventListener('keydown', e => { if(e.key==='Enter') tryPin(); });
+  } else {
+    body.innerHTML = `
+      <label>Your name</label>
+      <input type="text" id="req-name" placeholder="e.g. Ahmed">
+      <label>Email address</label>
+      <input type="text" id="req-email" placeholder="e.g. ahmed@example.com">
+      <label>Mobile number</label>
+      <input type="tel" id="req-mobile" placeholder="e.g. 771 2345">
+      <button class="btn btn-primary" id="req-submit" style="width:100%;">Request Access</button>
+      <div class="note" style="margin-top:12px;">An owner or manager will need to approve your request and share a sign-in PIN with you before you can get in.</div>
+    `;
+    document.getElementById('req-submit').addEventListener('click', async () => {
+      const name = document.getElementById('req-name').value.trim();
+      const email = document.getElementById('req-email').value.trim();
+      const mobile = document.getElementById('req-mobile').value.trim();
+      if(!name || !email){ alert('Enter your name and email address.'); return; }
+      await withFreshSettings(fresh => {
+        const list = fresh.pendingStaff || (fresh.pendingStaff = []);
+        list.push({id:'req-'+Date.now(), name, email, mobile, requestedAt:new Date().toISOString()});
+      });
+      state.gateMode = 'submitted';
+      renderStaffGate();
+    });
+  }
+}
+
+function logoutInternal(){
+  const backHash = state.gateRole === 'owner' ? OWNER_HASH : INTERNAL_HASH;
+  clearSession();
+  state.role = null; state.gateStage='pick'; state.pinTargetRole=null; state.pinError=''; state.tab=null; state.staffName=null; state.gateMode='signin';
+  history.replaceState(null,'','#'+backHash);
+  render();
+}
+
+/* ---------------- Mode toggle (Sender / Receiver) ---------------- */
+function renderModeToggle(){
+  const el = document.getElementById('mode-toggle');
+  el.style.display = 'flex';
+  el.innerHTML = `
+    <button class="${state.role==='sender'?'active':''}" data-mode="sender">I'm Sending Cargo</button>
+    <button class="${state.role==='receiver'?'active':''}" data-mode="receiver">I'm Receiving Cargo</button>
+  `;
+  el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    state.role = b.dataset.mode;
+    state.tab = DEFAULT_TAB[state.role];
+    location.hash = state.tab;
+    render();
+  }));
+}
+
+/* ---------------- Nav ---------------- */
+function renderTabs(){
+  const pending = state.shipments.filter(s => s.status === 'pending' && !isTripFinished(s.tripId)).length;
+  const pendingStaffCount = (state.settings.pendingStaff || []).length;
+  const el = document.getElementById('tabs');
+  el.style.display = 'flex';
+  const tabs = ROLE_TABS[state.role] || [];
+  el.innerHTML = tabs.map(t => {
+    const active = t.id === state.tab ? 'active' : '';
+    let badge = '';
+    if(t.id === 'dashboard' && pending > 0) badge = `<span class="badge">${pending}</span>`;
+    if(t.id === 'settings' && pendingStaffCount > 0) badge = `<span class="badge">${pendingStaffCount}</span>`;
+    return `<button class="${active}" data-tab="${t.id}">${t.label}${badge}</button>`;
+  }).join('');
+  el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { location.hash = b.dataset.tab; }));
+
+  const pill = document.getElementById('role-pill');
+  if(state.entryMode === 'internal'){
+    pill.style.display = 'flex';
+    document.getElementById('role-label').textContent = ROLES[state.role].name + (state.staffName ? ' \u00b7 ' + state.staffName : '');
+    document.getElementById('switch-role-btn').onclick = logoutInternal;
+  } else {
+    pill.style.display = 'none';
+  }
+}
+
+/* ---------------- Dashboard (owner + staff) ---------------- */
+function renderDashboard(){
+  const panel = document.getElementById('panel');
+  const active = state.shipments.filter(s => !isTripFinished(s.tripId));
+  const filtered = active
+    .filter(s => state.filter === 'all' ? true : s.status === state.filter)
+    .sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const counts = {
+    all: active.length,
+    pending: active.filter(s=>s.status==='pending').length,
+    loaded: active.filter(s=>s.status==='loaded').length,
+    in_transit: active.filter(s=>s.status==='in_transit').length,
+    delivered: active.filter(s=>s.status==='delivered').length,
+  };
+
+  const trip = activeTrip(state.trips);
+  const dests = trip ? (trip.destinations||[]) : [];
+  const islandField = dests.length ? `
+      <label>Destination island</label>
+      <select id="ac-island-select" required>
+        <option value="" disabled selected>Select destination</option>
+        ${dests.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('')}
+        <option value="__other">Other</option>
+      </select>
+      <input type="text" id="ac-island-other" placeholder="Type destination" style="display:none;">
+    ` : `
+      <label>Destination island</label>
+      <input type="text" id="ac-island-other" required placeholder="e.g. Maafushi">
+    `;
+
+  panel.innerHTML = `
+    <h2>Dispatch Dashboard</h2>
+    <p class="sub">Customer check-ins, loading log, and delivery status.</p>
+    <button class="btn btn-amber" id="toggle-add-customer-btn" style="margin-bottom:16px;">${state.addCustomerOpen ? 'Cancel' : '+ Add Customer'}</button>
+    ${state.addCustomerOpen ? `
+      <div class="settings-block" style="border:1.5px solid var(--line);border-radius:10px;padding:16px;background:#fff;margin-bottom:16px;">
+        <h3>Add Customer</h3>
+        ${!trip ? `<div class="note" style="border-color:var(--red);color:var(--red);margin-bottom:12px;">No trip scheduled yet \u2014 you can still add this customer, but set up a trip in Trips so their destination island can be selected properly.</div>` : ''}
+        <label>Sender name</label>
+        <input type="text" id="ac-name" required>
+        <label>Sender mobile number</label>
+        <input type="tel" id="ac-mobile" required>
+        ${islandField}
+        <label>Receiver's name</label>
+        <input type="text" id="ac-rname" required>
+        <label>Receiver's mobile number</label>
+        <input type="tel" id="ac-rmobile" required>
+        <label>Cargo note (optional)</label>
+        <textarea id="ac-note" rows="2" placeholder="e.g. 3 sacks of rice, fragile"></textarea>
+        <button class="btn btn-primary" id="ac-submit-btn">Add Customer</button>
+      </div>
+    ` : ''}
+    <div class="search-row">
+      <span class="filter-chip ${state.filter==='all'?'active':''}" data-f="all">All (${counts.all})</span>
+      <span class="filter-chip ${state.filter==='pending'?'active':''}" data-f="pending">Awaiting load (${counts.pending})</span>
+      <span class="filter-chip ${state.filter==='loaded'?'active':''}" data-f="loaded">Loaded (${counts.loaded})</span>
+      <span class="filter-chip ${state.filter==='in_transit'?'active':''}" data-f="in_transit">In Transit (${counts.in_transit})</span>
+      <span class="filter-chip ${state.filter==='delivered'?'active':''}" data-f="delivered">Delivered (${counts.delivered})</span>
+    </div>
+    <div id="list"></div>
+  `;
+  panel.querySelectorAll('.filter-chip').forEach(c => c.addEventListener('click', () => { state.filter = c.dataset.f; renderDashboard(); }));
+
+  document.getElementById('toggle-add-customer-btn').addEventListener('click', () => {
+    state.addCustomerOpen = !state.addCustomerOpen;
+    renderDashboard();
+  });
+
+  if(state.addCustomerOpen){
+    const acSelect = document.getElementById('ac-island-select');
+    const acOther = document.getElementById('ac-island-other');
+    if(acSelect){
+      acSelect.addEventListener('change', () => {
+        if(acSelect.value === '__other'){ acOther.style.display = 'block'; acOther.required = true; }
+        else { acOther.style.display = 'none'; acOther.required = false; acOther.value=''; }
+      });
+    }
+    document.getElementById('ac-submit-btn').addEventListener('click', async () => {
+      const name = document.getElementById('ac-name').value.trim();
+      const mobile = document.getElementById('ac-mobile').value.trim();
+      const island = acSelect && acSelect.value && acSelect.value !== '__other' ? acSelect.value : (acOther.value||'').trim();
+      const receiverName = document.getElementById('ac-rname').value.trim();
+      const receiverMobile = document.getElementById('ac-rmobile').value.trim();
+      const note = document.getElementById('ac-note').value.trim();
+      if(!name || !mobile || !island || !receiverName || !receiverMobile){ alert('Fill in sender, receiver, and destination island.'); return; }
+      const code = trackingCode();
+      const shipment = { id: code, name, mobile, island, receiverName, receiverMobile, note, status:'pending', items:[], total:0, tripId: trip ? trip.id : null, createdAt: new Date().toISOString() };
+      state.shipments.push(shipment);
+      await saveShipments(state.shipments);
+      state.addCustomerOpen = false;
+      renderDashboard();
+    });
+  }
+
+  const list = panel.querySelector('#list');
+  if(filtered.length === 0){ list.innerHTML = `<div class="empty">No shipments here yet.</div>`; return; }
+  list.innerHTML = filtered.map(s => renderTagCard(s)).join('');
+
+  list.querySelectorAll('[data-load]').forEach(b => b.addEventListener('click', () => openLoadForm(b.dataset.load)));
+  list.querySelectorAll('[data-deliver]').forEach(b => b.addEventListener('click', () => markDelivered(b.dataset.deliver)));
+  list.querySelectorAll('[data-invoice]').forEach(b => b.addEventListener('click', () => { state.trackQuery=b.dataset.invoice; location.hash='track'; }));
+  list.querySelectorAll('[data-delete-shipment]').forEach(b => b.addEventListener('click', async () => {
+    const target = state.shipments.find(x => x.id === b.dataset.deleteShipment);
+    if(target && target.items && target.items.length && state.role !== 'owner'){
+      alert('Only the Owner can delete a shipment once items have been logged.');
+      return;
+    }
+    if(!confirm('Delete this customer entry? This cannot be undone.')) return;
+    const idx = state.shipments.findIndex(x => x.id === b.dataset.deleteShipment);
+    if(idx > -1) state.shipments.splice(idx, 1);
+    await saveShipments(state.shipments);
+    renderDashboard();
+  }));
+  list.querySelectorAll('[data-take-photo]').forEach(b => b.addEventListener('click', () => {
+    const input = document.querySelector(`[data-load-photo="${b.dataset.takePhoto}"]`);
+    if(input) input.click();
+  }));
+  list.querySelectorAll('[data-pay]').forEach(b => b.addEventListener('click', async () => {
+    const s = state.shipments.find(x => x.id === b.dataset.pay);
+    s.paid = true; s.paymentMethod = b.dataset.method; s.paidAt = new Date().toISOString();
+    await saveShipments(state.shipments);
+    renderDashboard();
+  }));
+  list.querySelectorAll('[data-cash-open]').forEach(b => b.addEventListener('click', () => {
+    state.cashDraft[b.dataset.cashOpen] = { received: '' };
+    renderDashboard();
+  }));
+  list.querySelectorAll('[data-cash-cancel]').forEach(b => b.addEventListener('click', () => {
+    delete state.cashDraft[b.dataset.cashCancel];
+    renderDashboard();
+  }));
+  list.querySelectorAll('[id^="cash-input-"]').forEach(inp => inp.addEventListener('input', () => {
+    const id = inp.id.replace('cash-input-','');
+    if(!state.cashDraft[id]) return;
+    state.cashDraft[id].received = inp.value;
+    const s = state.shipments.find(x => x.id === id);
+    const received = parseFloat(inp.value) || 0;
+    const balance = received - (s.total || 0);
+    const label = balance > 0 ? 'Change to give back' : (balance < 0 ? 'Still owing' : 'Exact amount');
+    const color = balance > 0 ? 'var(--green)' : (balance < 0 ? 'var(--red)' : 'var(--navy-deep)');
+    const balEl = document.getElementById('cash-balance-'+id);
+    if(balEl){ balEl.textContent = `${label}: ${fmtMoney(Math.abs(balance))}`; balEl.style.color = color; }
+  }));
+  list.querySelectorAll('[data-cash-confirm]').forEach(b => b.addEventListener('click', async () => {
+    const id = b.dataset.cashConfirm;
+    const s = state.shipments.find(x => x.id === id);
+    const received = parseFloat(state.cashDraft[id].received) || 0;
+    s.paid = true; s.paymentMethod = 'cash'; s.paidAt = new Date().toISOString();
+    s.cashReceived = received; s.cashChange = received - (s.total||0);
+    delete state.cashDraft[id];
+    await saveShipments(state.shipments);
+    renderDashboard();
+  }));
+}
+
+function renderTagCard(s){
+  const statusClass = 'status-' + s.status;
+  const statusLabel = STATUS_LABELS[s.status] || s.status;
+  const draft = state.loadingDraft[s.id];
+  const cash = state.cashDraft[s.id];
+  let actions = '';
+  if(s.status === 'pending'){
+    if(!draft){
+      actions = `<button class="btn btn-amber" data-load="${s.id}">Log Items Loaded</button>`;
+    } else if(draft.open){
+      actions = `<button class="btn btn-ghost" data-load="${s.id}">Hide Items Log</button>`;
+    } else {
+      const pendingCount = draft.items.reduce((n,i)=>n+i.qty,0);
+      actions = `<button class="btn btn-amber" data-load="${s.id}">Continue \u2014 ${pendingCount} item${pendingCount===1?'':'s'} pending</button>`;
+    }
+  } else if(s.status === 'loaded'){
+    actions = `<button class="btn btn-ghost" data-invoice="${s.id}">View Invoice</button>`;
+  } else if(s.status === 'in_transit'){
+    actions = `<button class="btn btn-primary" data-deliver="${s.id}">Mark Delivered</button>
+               <button class="btn btn-ghost" data-invoice="${s.id}">View Invoice</button>`;
+  } else {
+    actions = `<button class="btn btn-ghost" data-invoice="${s.id}">View Invoice</button>`;
+  }
+
+  const photoControls = (s.status === 'loaded' || s.status === 'in_transit') ? `
+    <button class="btn btn-ghost" data-take-photo="${s.id}">${s.photo ? 'Retake Photo' : 'Add Photo'}</button>
+    <input type="file" accept="image/*" data-load-photo="${s.id}" style="display:none;">
+  ` : '';
+  const photoThumb = photoLinkHtml(s);
+
+  const itemsSummary = (s.items && s.items.length) ? `
+    <details class="items-details">
+      <summary>Items (${s.items.reduce((n,i)=>n+i.qty,0)})</summary>
+      <div class="items-body">
+        ${s.items.map(i => `${i.qty}\u00d7 ${escapeHtml(i.name)}`).join('<br>')}
+        <div style="margin-top:6px;font-weight:700;color:var(--navy-deep);">Total ${fmtMoney(s.total)}</div>
+      </div>
+    </details>
+  ` : '';
+  const invoiceLine = s.invoiceId ? `<div class="tag-meta">Invoice ${s.invoiceId} \u00b7 <strong style="color:${s.paid?'#2F7A4F':'#B23A2F'}">${s.paid ? 'Paid \u2014 ' + (s.paymentMethod||'').toUpperCase() : 'Unpaid'}</strong></div>` : '';
+  const paymentActions = (s.invoiceId && !s.voided && !s.paid && !cash) ? `
+    <button class="btn btn-primary" data-cash-open="${s.id}">Collect \u2014 Cash</button>
+    <button class="btn btn-primary" data-pay="${s.id}" data-method="transfer">Collect \u2014 Transfer</button>
+  ` : '';
+
+  const tel = (num) => num ? `<a class="party-phone" href="tel:${escapeHtml(num.replace(/[^\d+]/g,''))}">${escapeHtml(num)}</a>` : '';
+  const hasItems = s.items && s.items.length > 0;
+  const canDelete = !hasItems || state.role === 'owner';
+  const deleteBtn = canDelete ? `<button class="btn btn-danger" data-delete-shipment="${s.id}">Delete</button>` : '';
+
+  return `
+    <div class="tag">
+      <div class="tag-top">
+        <div style="flex:1;">
+          <div class="party-block"><span class="party-role">Sender</span><span class="party-name">${escapeHtml(s.name)}</span><br>${tel(s.mobile)}</div>
+          ${s.receiverName ? `<div class="party-block"><span class="party-role">Receiver</span><span class="party-name">${escapeHtml(s.receiverName)}</span><br>${tel(s.receiverMobile)}</div>` : ''}
+          <div class="tag-meta">${s.id} \u00b7 to <strong>${escapeHtml(s.island)}</strong></div>
+        </div>
+        <span class="status-pill ${statusClass}">${statusLabel}</span>
+      </div>
+      ${s.note ? `<div class="tag-meta">Note: ${escapeHtml(s.note)}</div>` : ''}
+      ${itemsSummary}
+      ${invoiceLine}
+      ${photoThumb}
+      <div class="tag-actions">${actions}${paymentActions}${photoControls}${deleteBtn}</div>
+      ${cash ? renderCashForm(s) : ''}
+      ${draft && draft.open ? renderLoadForm(s) : ''}
+    </div>
+  `;
+}
+
+function renderCashForm(s){
+  const cash = state.cashDraft[s.id];
+  const received = parseFloat(cash.received) || 0;
+  const balance = received - (s.total || 0);
+  const balanceLabel = balance > 0 ? 'Change to give back' : (balance < 0 ? 'Still owing' : 'Exact amount');
+  const balanceColor = balance > 0 ? 'var(--green)' : (balance < 0 ? 'var(--red)' : 'var(--navy-deep)');
+  return `
+    <div class="cash-box">
+      <label style="margin-bottom:6px;">Amount received (MVR)</label>
+      <input type="text" inputmode="decimal" id="cash-input-${s.id}" value="${escapeHtml(cash.received)}" placeholder="0.00" style="margin-bottom:8px;">
+      <div class="tag-meta">Total due: ${fmtMoney(s.total)}</div>
+      <div class="balance" id="cash-balance-${s.id}" style="color:${balanceColor};">${balanceLabel}: ${fmtMoney(Math.abs(balance))}</div>
+      <div class="tag-actions">
+        <button class="btn btn-primary" data-cash-confirm="${s.id}">Confirm Cash Payment</button>
+        <button class="btn btn-ghost" data-cash-cancel="${s.id}">Cancel</button>
+      </div>
+    </div>
+  `;
+}
+
+function openLoadForm(id){
+  const existing = state.loadingDraft[id];
+  if(!existing){
+    state.loadingDraft[id] = { items: [], customName:'', customPrice:'', itemSearch:'', open: true };
+  } else if(existing.open){
+    // Collapsing: if nothing was actually added yet, just discard the empty draft
+    // so the card goes back to a plain "Log Items Loaded" button. If items were
+    // added, keep everything -- just hide the form, don't lose the work.
+    if(existing.items.length === 0){ delete state.loadingDraft[id]; }
+    else { existing.open = false; }
+  } else {
+    existing.open = true;
+  }
+  renderDashboard();
+}
+
+function renderLoadForm(s){
+  const draft = state.loadingDraft[s.id];
+  const total = draft.items.reduce((sum,i) => sum + i.qty*i.price, 0);
+  const sortedRates = state.rates.slice().sort((a,b) => a.name.localeCompare(b.name));
+  const query = (draft.itemSearch || '').trim().toLowerCase();
+  const matches = query ? sortedRates.filter(r => r.name.toLowerCase().includes(query)) : sortedRates;
+  return `
+    <div style="border-top:1.5px dashed var(--line);margin-top:10px;padding-top:14px;">
+      <label style="margin-bottom:10px;">Items loaded for ${s.id}</label>
+
+      <div style="margin-bottom:14px;">
+        <label>Search &amp; tap an item to add it</label>
+        <input type="text" data-item-search="${s.id}" placeholder="Search items\u2026" autocomplete="off" value="${escapeHtml(draft.itemSearch||'')}" style="margin-bottom:8px;">
+        <div class="item-results" data-item-results="${s.id}">
+          ${matches.length ? matches.map(r => `
+            <button type="button" class="item-result-row" data-pick-item="${s.id}" data-rate-id="${r.id}">
+              <span>${escapeHtml(r.name)}</span><span class="rprice">${fmtMoney(r.price)}</span>
+            </button>
+          `).join('') : `<div class="empty" style="padding:10px 0;font-size:13px;">No matching items.</div>`}
+        </div>
+      </div>
+
+      ${draft.items.length ? draft.items.map((i,idx) => `
+        <div class="rate-row">
+          <div>
+            <div class="name">${escapeHtml(i.name)}</div>
+            <div class="price">${fmtMoney(i.price)} / unit</div>
+          </div>
+          <div class="stepper">
+            <button data-dec="${idx}" data-sid="${s.id}">\u2212</button>
+            <span class="qty">${i.qty}</span>
+            <button data-inc="${idx}" data-sid="${s.id}">+</button>
+            <button data-remove="${idx}" data-sid="${s.id}" title="Remove" style="border-color:#e0b3b3;color:#a13a3a;">\u00d7</button>
+          </div>
+        </div>
+      `).join('') : `<div class="empty" style="padding:16px 0;">No items added yet.</div>`}
+
+      <div style="display:flex;gap:8px;align-items:flex-end;margin:14px 0 12px;">
+        <div style="flex:1;">
+          <label>New item (not in the list above)</label>
+          <input type="text" placeholder="e.g. Motorcycle" data-custom-name="${s.id}" value="${escapeHtml(draft.customName)}" style="margin-bottom:0;">
+        </div>
+        <div style="width:100px;">
+          <label>Price</label>
+          <input type="text" placeholder="0" data-custom-price="${s.id}" value="${escapeHtml(draft.customPrice)}" style="margin-bottom:0;">
+        </div>
+        <button class="btn btn-ghost" data-add-custom="${s.id}" style="height:44px;">Add</button>
+      </div>
+      <div class="total-line"><span>Total</span><span class="amt">${fmtMoney(total)}</span></div>
+      <div class="tag-actions" style="margin-top:14px;">
+        <button class="btn btn-primary" data-confirm-load="${s.id}">Confirm Loaded &amp; Take Photo</button>
+        <button class="btn btn-ghost" data-cancel-load="${s.id}">Cancel</button>
+      </div>
+      <div class="note" style="margin-top:8px;">Confirms immediately, then opens your camera for a photo. If the camera step ever gets interrupted, the item is still safely marked Loaded \u2014 just use "Add Photo" on the card afterward.</div>
+    </div>
+  `;
+}
+
+function pickItem(sid, rateId){
+  const d = state.loadingDraft[sid];
+  const rate = state.rates.find(r => r.id === rateId);
+  if(!d || !rate) return;
+  const existing = d.items.find(i => i.id === rate.id);
+  if(existing){ existing.qty += 1; }
+  else { d.items.push({ id: rate.id, name: rate.name, price: rate.price, qty: 1 }); }
+  d.itemSearch = '';
+  renderDashboard();
+}
+
+function wireLoadFormEvents(){
+  document.querySelectorAll('[data-item-search]').forEach(inp => inp.addEventListener('input', () => {
+    const sid = inp.dataset.itemSearch;
+    const d = state.loadingDraft[sid];
+    if(!d) return;
+    d.itemSearch = inp.value;
+    const query = inp.value.trim().toLowerCase();
+    const sortedRates = state.rates.slice().sort((a,b) => a.name.localeCompare(b.name));
+    const matches = query ? sortedRates.filter(r => r.name.toLowerCase().includes(query)) : sortedRates;
+    const box = document.querySelector(`[data-item-results="${sid}"]`);
+    if(!box) return;
+    box.innerHTML = matches.length ? matches.map(r => `
+      <button type="button" class="item-result-row" data-pick-item="${sid}" data-rate-id="${r.id}">
+        <span>${escapeHtml(r.name)}</span><span class="rprice">${fmtMoney(r.price)}</span>
+      </button>
+    `).join('') : `<div class="empty" style="padding:10px 0;font-size:13px;">No matching items.</div>`;
+    box.querySelectorAll('[data-pick-item]').forEach(b => b.addEventListener('click', () => pickItem(b.dataset.pickItem, b.dataset.rateId)));
+  }));
+  document.querySelectorAll('[data-pick-item]').forEach(b => b.addEventListener('click', () => pickItem(b.dataset.pickItem, b.dataset.rateId)));
+  document.querySelectorAll('[data-inc]').forEach(b => b.addEventListener('click', () => {
+    const d = state.loadingDraft[b.dataset.sid]; d.items[b.dataset.inc].qty++; renderDashboard();
+  }));
+  document.querySelectorAll('[data-dec]').forEach(b => b.addEventListener('click', () => {
+    const d = state.loadingDraft[b.dataset.sid];
+    const idx = b.dataset.dec;
+    d.items[idx].qty = Math.max(0, d.items[idx].qty - 1);
+    if(d.items[idx].qty === 0) d.items.splice(idx,1);
+    renderDashboard();
+  }));
+  document.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', () => {
+    const d = state.loadingDraft[b.dataset.sid]; d.items.splice(b.dataset.remove,1); renderDashboard();
+  }));
+  document.querySelectorAll('[data-custom-name]').forEach(inp => inp.addEventListener('input', () => { state.loadingDraft[inp.dataset.customName].customName = inp.value; }));
+  document.querySelectorAll('[data-custom-price]').forEach(inp => inp.addEventListener('input', () => { state.loadingDraft[inp.dataset.customPrice].customPrice = inp.value; }));
+  document.querySelectorAll('[data-add-custom]').forEach(b => b.addEventListener('click', async () => {
+    const d = state.loadingDraft[b.dataset.addCustom];
+    const name = (d.customName||'').trim();
+    const price = parseFloat(d.customPrice) || 0;
+    if(!name) return;
+
+    // Reuse an existing rate if one with this name already exists (case-insensitive),
+    // otherwise persist it as a new rate so it shows up in the dropdown for every
+    // future shipment entry, not just this one.
+    let rate = state.rates.find(r => r.name.trim().toLowerCase() === name.toLowerCase());
+    if(!rate){
+      rate = { id: 'custom-'+Date.now(), name, price };
+      state.rates.push(rate);
+      await saveRates(state.rates);
+    }
+
+    const existing = d.items.find(i => i.id === rate.id);
+    if(existing){ existing.qty++; }
+    else { d.items.push({ id: rate.id, name: rate.name, price: rate.price, qty: 1 }); }
+
+    d.customName=''; d.customPrice='';
+    renderDashboard();
+  }));
+  document.querySelectorAll('[data-cancel-load]').forEach(b => b.addEventListener('click', () => { delete state.loadingDraft[b.dataset.cancelLoad]; renderDashboard(); }));
+
+  document.querySelectorAll('[data-confirm-load]').forEach(b => b.addEventListener('click', async () => {
+    const id = b.dataset.confirmLoad;
+    const draft = state.loadingDraft[id];
+    const items = draft.items.filter(i => i.qty > 0);
+    if(items.length === 0){ alert('Add at least one item before confirming.'); return; }
+    // Save first, camera second. If the camera step gets interrupted (iOS can
+    // reload the whole page while the camera app is open, wiping in-memory
+    // state), the shipment is already safely marked Loaded with its invoice --
+    // only the photo attempt is lost, and that can just be retried afterward.
+    await completeLoadConfirm(id);
+    const photoInput = document.querySelector(`[data-load-photo="${id}"]`);
+    if(photoInput) photoInput.click();
+  }));
+
+  document.querySelectorAll('[data-load-photo]').forEach(inp => inp.addEventListener('change', async () => {
+    const id = inp.dataset.loadPhoto;
+    const file = inp.files && inp.files[0];
+    if(!file) return;
+    let photo = null;
+    try{ photo = await compressImageToDataUrl(file, 900, 0.6); }
+    catch(e){ console.error('Photo compression failed', e); }
+    if(photo) await attachPhoto(id, photo);
+  }));
+}
+
+// Resizes and re-compresses a captured photo before it ever touches the
+// database -- raw camera photos are several MB each, and this data is stored
+// inside one shared JSON blob for every shipment, so uncompressed photos
+// would make the whole app slow to load for everyone, not just this record.
+function compressImageToDataUrl(file, maxDim, quality){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      img.onerror = reject;
+      img.onload = () => {
+        let { width, height } = img;
+        if(width > height && width > maxDim){ height = Math.round(height * (maxDim/width)); width = maxDim; }
+        else if(height > maxDim){ width = Math.round(width * (maxDim/height)); height = maxDim; }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function completeLoadConfirm(id){
+  const draft = state.loadingDraft[id];
+  if(!draft) return;
+  const items = draft.items.filter(i => i.qty > 0).map(i => ({name:i.name, qty:i.qty, price:i.price}));
+  if(items.length === 0) return;
+  const total = items.reduce((sum,i) => sum + i.qty*i.price, 0);
+  const s = state.shipments.find(x => x.id === id);
+  s.status = 'loaded'; s.items = items; s.total = total; s.loadedAt = new Date().toISOString();
+  s.invoiceId = s.invoiceId || invoiceId();
+  s.paid = s.paid || false;
+  delete state.loadingDraft[id];
+  await saveShipments(state.shipments);
+  renderDashboard();
+}
+
+async function attachPhoto(id, photo){
+  const s = state.shipments.find(x => x.id === id);
+  if(!s) return;
+  s.photo = photo; s.imageArchived = false;
+  await saveShipments(state.shipments);
+  renderDashboard();
+}
+
+// Called from the Trips tab: moves every 'loaded' shipment tied to this trip
+// into 'in_transit' together, since the boat either has departed or hasn't --
+// individual shipments don't depart separately.
+async function markTripInTransit(tripId){
+  let moved = 0;
+  const now = new Date().toISOString();
+  state.shipments.forEach(s => {
+    if(s.tripId === tripId && s.status === 'loaded'){ s.status = 'in_transit'; s.inTransitAt = now; moved++; }
+  });
+  if(moved > 0) await saveShipments(state.shipments);
+  await withFreshTrips(list => {
+    const t = list.find(x => x.id === tripId);
+    if(t) t.departed = true;
+  });
+  return moved;
+}
+
+function isTripFinished(tripId){
+  if(!tripId) return false;
+  const t = (state.trips||[]).find(x => x.id === tripId);
+  return !!(t && t.finished);
+}
+
+async function finishTrip(tripId){
+  await withFreshTrips(list => {
+    const t = list.find(x => x.id === tripId);
+    if(t){ t.finished = true; t.finishedAt = new Date().toISOString(); }
+  });
+}
+
+async function markDelivered(id){
+  const s = state.shipments.find(x => x.id === id);
+  if(!s) return;
+  s.status = 'delivered'; s.deliveredAt = new Date().toISOString();
+  delete s.photo; s.imageArchived = false;
+  await saveShipments(state.shipments);
+  renderDashboard();
+}
+
+/* ---------------- Check-In (sender) ---------------- */
+function renderCheckin(){
+  const panel = document.getElementById('panel');
+  const trip = activeTrip(state.trips);
+
+  if(!trip){
+    panel.innerHTML = `
+      <h2>Cargo Check-In</h2>
+      <div class="empty" style="padding:48px 20px;">Currently there are no trips scheduled. Please check back once the next trip is announced.</div>
+    `;
+    return;
+  }
+
+  const dests = trip.destinations || [];
+
+  const islandField = dests.length ? `
+      <label>Destination island</label>
+      <select id="f-island-select" required>
+        <option value="" disabled selected>Select destination</option>
+        ${dests.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('')}
+        <option value="__other">Other</option>
+      </select>
+      <input type="text" id="f-island-other" placeholder="Type destination" style="display:none;">
+    ` : `
+      <label>Destination island</label>
+      <input type="text" id="f-island-other" required placeholder="e.g. Maafushi">
+    `;
+
+  panel.innerHTML = `
+    <h2>Cargo Check-In</h2>
+    <p class="sub">Enter your details and who's receiving the cargo. You'll get a tracking code to share.</p>
+    ${trip ? `<div class="note" style="margin-bottom:16px;">Next trip: <strong>${escapeHtml(trip.origin)} \u2192 ${escapeHtml(dests.join(', '))}</strong> on ${fmtDMY(trip.date)}</div>` : ''}
+
+    <form id="checkin-form">
+      <label>Your name (sender)</label>
+      <input type="text" id="f-name" required>
+      <label>Your mobile number</label>
+      <input type="tel" id="f-mobile" required>
+      ${islandField}
+      <label>Receiver's name</label>
+      <input type="text" id="f-rname" required>
+      <label>Receiver's mobile number</label>
+      <input type="tel" id="f-rmobile" required>
+      <label>Cargo note (optional)</label>
+      <textarea id="f-note" rows="2" placeholder="e.g. 3 sacks of rice, fragile"></textarea>
+      <button type="submit" class="btn btn-primary">Submit Check-In</button>
+    </form>
+    <div id="checkin-result"></div>
+  `;
+
+  const selectEl = document.getElementById('f-island-select');
+  const otherEl = document.getElementById('f-island-other');
+  if(selectEl){
+    selectEl.addEventListener('change', () => {
+      if(selectEl.value === '__other'){ otherEl.style.display = 'block'; otherEl.required = true; }
+      else { otherEl.style.display = 'none'; otherEl.required = false; otherEl.value=''; }
+    });
+  }
+
+  document.getElementById('checkin-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('f-name').value.trim();
+    const mobile = document.getElementById('f-mobile').value.trim();
+    const island = selectEl && selectEl.value && selectEl.value !== '__other' ? selectEl.value : (document.getElementById('f-island-other').value||'').trim();
+    const receiverName = document.getElementById('f-rname').value.trim();
+    const receiverMobile = document.getElementById('f-rmobile').value.trim();
+    const note = document.getElementById('f-note').value.trim();
+    if(!name || !mobile || !island || !receiverName || !receiverMobile) return;
+
+    const code = trackingCode();
+    const shipment = { id: code, name, mobile, island, receiverName, receiverMobile, note, status:'pending', items:[], total:0, tripId: trip ? trip.id : null, createdAt: new Date().toISOString() };
+    state.shipments.push(shipment);
+    await saveShipments(state.shipments);
+
+    document.getElementById('checkin-result').innerHTML = `
+      <div class="confirm-code">
+        <div>Check-in received. Save this tracking code:</div>
+        <div class="big">${code}</div>
+        <div style="font-size:12.5px;color:#C7D3E0;">Share it with ${escapeHtml(receiverName)} so they can track it too.</div>
+      </div>
+    `;
+    e.target.reset();
+  });
+}
+
+/* ---------------- Track (sender + receiver + staff + owner) ---------------- */
+function renderTrack(){
+  const panel = document.getElementById('panel');
+  panel.innerHTML = `
+    <h2>Track a Shipment</h2>
+    <p class="sub">Search by tracking code, sender mobile, or receiver mobile.</p>
+    <div class="search-row">
+      <input type="text" id="track-input" placeholder="CF-260721-A3K9 or mobile number" value="${escapeHtml(state.trackQuery)}">
+      <button class="btn btn-primary" id="track-btn">Search</button>
+    </div>
+    <div id="track-results"></div>
+  `;
+  const renderResults = () => {
+    const q = document.getElementById('track-input').value.trim().toLowerCase();
+    state.trackQuery = q;
+    const results = state.shipments.filter(s =>
+      s.id.toLowerCase() === q ||
+      (s.mobile||'').toLowerCase().includes(q) ||
+      (s.receiverMobile||'').toLowerCase().includes(q)
+    );
+    const box = document.getElementById('track-results');
+    if(!q){ box.innerHTML = ''; return; }
+    if(results.length === 0){ box.innerHTML = `<div class="empty">No shipment found for "${escapeHtml(q)}".</div>`; return; }
+    box.innerHTML = results.map(renderTrackResult).join('');
+    wireShareEvents(box, results);
+  };
+  document.getElementById('track-btn').addEventListener('click', renderResults);
+  document.getElementById('track-input').addEventListener('keydown', (e) => { if(e.key==='Enter') renderResults(); });
+
+  function wireShareEvents(box, results){
+    box.querySelectorAll('[data-share-image]').forEach(b => b.addEventListener('click', () => {
+      const s = results.find(x => x.id === b.dataset.shareImage);
+      if(s) shareInvoiceImage(s);
+    }));
+  }
+
+  if(state.trackQuery) renderResults();
+}
+
+
+function renderTrackResult(s){
+  const steps = STATUS_STEPS;
+  const idx = steps.indexOf(s.status);
+  const dates = { pending: s.createdAt, loaded: s.loadedAt, in_transit: s.inTransitAt, delivered: s.deliveredAt };
+  const labels = { pending:'Checked In', loaded:'Loaded', in_transit:'In Transit', delivered:'Delivered' };
+
+  const timeline = steps.map((step,i) => `
+    <div class="tl-step ${i<=idx?'done':''}">
+      <div class="tl-dot"></div>
+      <div class="tl-label">${labels[step]}</div>
+      <div class="tl-date">${dates[step] ? fmtDate(dates[step]) : ''}</div>
+    </div>
+  `).join('');
+
+  const isCustomer = state.role === 'sender' || state.role === 'receiver';
+
+  const invoice = (!isCustomer && s.items && s.items.length) ? `
+    <div class="invoice">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="display" style="font-size:15px;color:var(--navy-deep);">Invoice \u2014 ${s.id}</div>
+        <button class="btn btn-ghost" data-share-image="${s.id}" style="padding:6px 12px;font-size:11px;">Share as Image</button>
+      </div>
+      <div class="tag-meta" style="margin-top:6px;">Sender: ${escapeHtml(s.name)} \u00b7 ${escapeHtml(s.mobile)} \u2192 ${escapeHtml(s.island)}</div>
+      ${s.receiverName ? `<div class="tag-meta">Receiver: ${escapeHtml(s.receiverName)} \u00b7 ${escapeHtml(s.receiverMobile||'')}</div>` : ''}
+      ${s.invoiceId ? `<div class="tag-meta">Invoice ${s.invoiceId} \u00b7 <strong style="color:${s.paid?'#2F7A4F':'#B23A2F'}">${s.paid?'Paid':'Unpaid'}</strong></div>` : ''}
+      <table>
+        <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+          ${s.items.map(i => `<tr><td>${escapeHtml(i.name)}</td><td class="num">${i.qty}</td><td class="num">${fmtMoney(i.price)}</td><td class="num">${fmtMoney(i.qty*i.price)}</td></tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="total-line"><span>Total Due</span><span class="amt">${fmtMoney(s.total)}</span></div>
+    </div>
+  ` : '';
+
+  const itemsOnly = (isCustomer && s.items && s.items.length) ? `
+    <div class="invoice">
+      <div class="display" style="font-size:15px;color:var(--navy-deep);">Items Loaded</div>
+      <table>
+        <thead><tr><th>Item</th><th class="num">Qty</th></tr></thead>
+        <tbody>
+          ${s.items.map(i => `<tr><td>${escapeHtml(i.name)}</td><td class="num">${i.qty}</td></tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  ` : '';
+
+  return `
+    <div class="tag">
+      <div class="tag-top">
+        <div class="tag-code">${s.id}</div>
+        <span class="status-pill status-${s.status}">${labels[s.status]}</span>
+      </div>
+      <div class="tag-meta">${escapeHtml(s.name)} \u2192 ${escapeHtml(s.island)} ${s.receiverName ? '(for '+escapeHtml(s.receiverName)+')' : ''}</div>
+      <div class="timeline">${timeline}</div>
+      ${invoice}
+      ${itemsOnly}
+    </div>
+  `;
+}
+
+/* ---------------- Trips (owner only) ---------------- */
+const ORIGIN_ROUTES = {
+  "Male'":   { destinations: ["Maalhos","Himandhoo","Feridhoo"], location: "Male' T-Jetty Area" },
+  "Maalhos": { destinations: ["Male'"], location: "Maalhos T-Jetty Area" },
+};
+
+function renderTrips(){
+  const panel = document.getElementById('panel');
+  const trips = (state.trips||[]).slice().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const d = state.settings.tripDefaults || {};
+  const hasDefaults = !!(d.boatContacts || d.trackingLink || d.viberLink);
+  const ongoingTrip = trips.find(t => t.active && !t.finished);
+
+  panel.innerHTML = `
+    <h2>Trips</h2>
+    <p class="sub">Plan the next trip. The active trip's destinations show up on the customer check-in form automatically.</p>
+    ${ongoingTrip ? `
+      <div class="note" style="margin-bottom:16px;">A trip is currently in progress (${escapeHtml(ongoingTrip.origin)} \u2192 ${escapeHtml((ongoingTrip.destinations||[]).join(', '))}). Mark it finished before planning the next one.</div>
+    ` : `
+      <div class="settings-block" style="border:1.5px solid var(--line);border-radius:10px;padding:16px;background:#fff;">
+        <h3>New Trip</h3>
+        <label>Origin</label>
+        <select id="trip-origin">
+          <option value="" disabled selected>Select origin</option>
+          <option value="Male'">Male'</option>
+          <option value="Maalhos">Maalhos</option>
+        </select>
+        <label>Destinations (one per line)</label>
+        <textarea id="trip-dests" rows="3" placeholder="Fills in automatically once you pick an origin \u2014 edit if needed"></textarea>
+        <label>Trip date</label>
+        <input type="date" id="trip-date">
+        <label>Loading time</label>
+        <input type="time" id="trip-loading">
+        <label>Estimated departure time</label>
+        <input type="time" id="trip-departure">
+        <label>Loading location / jetty</label>
+        <input type="text" id="trip-location" placeholder="Fills in automatically once you pick an origin">
+        ${hasDefaults ? `
+          <div class="note">Boat contacts, tracking link, and Viber link are fixed and pulled in automatically from Owner Settings \u2014 <a href="#settings" style="color:var(--teal);font-weight:700;">edit them there</a> if they ever change.</div>
+        ` : `
+          <div class="note" style="border-color:var(--red);color:var(--red);">Boat contacts, tracking link, and Viber link aren't set yet \u2014 go to <a href="#settings" style="color:var(--red);font-weight:700;">Owner Settings</a> and add them first, or the announcement will show them blank.</div>
+        `}
+        <button class="btn btn-primary" id="create-trip-btn" style="margin-top:12px;">Create Trip &amp; Set Active</button>
+      </div>
+    `}
+    <div id="trip-list" style="margin-top:20px;"></div>
+  `;
+
+  if(!ongoingTrip){
+  document.getElementById('trip-origin').addEventListener('change', (e) => {
+    const route = ORIGIN_ROUTES[e.target.value];
+    if(!route) return;
+    document.getElementById('trip-dests').value = route.destinations.join('\n');
+    document.getElementById('trip-location').value = route.location;
+  });
+
+  document.getElementById('create-trip-btn').addEventListener('click', async () => {
+    const origin = document.getElementById('trip-origin').value.trim();
+    const destinations = document.getElementById('trip-dests').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    const date = document.getElementById('trip-date').value;
+    const loadingTime = document.getElementById('trip-loading').value;
+    const departureTime = document.getElementById('trip-departure').value;
+    const location = document.getElementById('trip-location').value.trim();
+    const fresh = state.settings.tripDefaults || {};
+    const boatContacts = fresh.boatContacts || '';
+    const trackingLink = fresh.trackingLink || '';
+    const viberLink = fresh.viberLink || '';
+    if(!origin || destinations.length === 0 || !date){ alert('Origin, at least one destination, and a date are required.'); return; }
+    const trip = {id:'trip-'+Date.now(), origin, destinations, date, loadingTime, departureTime, location, boatContacts, trackingLink, viberLink, active:true, createdAt:new Date().toISOString()};
+    await withFreshTrips(list => {
+      list.forEach(t => t.active = false);
+      list.push(trip);
+    });
+    renderTrips();
+  });
+  } // end ongoingTrip guard
+
+  const list = panel.querySelector('#trip-list');
+  if(trips.length === 0){ list.innerHTML = `<div class="empty">No trips planned yet.</div>`; return; }
+
+  list.innerHTML = trips.map(t => {
+    const loadedCount = state.shipments.filter(s => s.tripId === t.id && s.status === 'loaded').length;
+    const tripShipments = state.shipments.filter(s => s.tripId === t.id);
+    const undelivered = tripShipments.filter(s => s.status !== 'delivered');
+    const delivered = tripShipments.filter(s => s.status === 'delivered');
+    const statusClass = t.finished ? 'status-delivered' : (t.departed ? 'status-in_transit' : (t.active?'status-delivered':'status-pending'));
+    const statusLabel = t.finished ? 'Finished' : (t.departed ? 'In Transit' : (t.active?'Active':'Past'));
+    const showFinish = state.finishDraft[t.id];
+    return `
+    <div class="tag">
+      <div class="tag-top">
+        <div>
+          <div class="tag-code">${escapeHtml(t.origin)} \u2192 ${escapeHtml((t.destinations||[]).join(', '))}</div>
+          <div class="tag-meta">${fmtDMY(t.date)} \u00b7 Load ${escapeHtml(t.loadingTime||'--:--')} \u00b7 Depart ${escapeHtml(t.departureTime||'--:--')}</div>
+        </div>
+        <span class="status-pill ${statusClass}">${statusLabel}</span>
+      </div>
+      <div class="tag-meta">${escapeHtml(t.location||'')}</div>
+      ${t.finished ? `<div class="tag-meta">${delivered.length} delivered \u00b7 ${undelivered.length} undelivered</div>` : ''}
+      <div class="tag-actions">
+        ${!t.active && !t.finished ? `<button class="btn btn-amber" data-set-active="${t.id}">Set Active</button>` : ''}
+        ${t.active && !t.departed && !t.finished ? `<button class="btn btn-primary" data-mark-transit="${t.id}">Mark In Transit (${loadedCount} loaded)</button>` : ''}
+        ${t.departed && !t.finished ? `<button class="btn btn-primary" data-mark-finish="${t.id}">Mark Trip Finished</button>` : ''}
+        ${!t.finished ? `<button class="btn btn-ghost" data-copy-ann="${t.id}">Copy Announcement</button>` : ''}
+        <button class="btn btn-danger" data-del-trip="${t.id}">Delete</button>
+      </div>
+      ${showFinish ? `
+        <div class="cash-box">
+          <label style="margin-bottom:8px;">${undelivered.length === 0 ? 'Everything on this trip was delivered.' : `${undelivered.length} shipment(s) still not delivered:`}</label>
+          ${undelivered.length ? `
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+              ${undelivered.map(s => `
+                <div class="item-result-row" style="cursor:default;">
+                  <span>${escapeHtml(s.id)} \u2014 ${escapeHtml(s.name)} \u2192 ${escapeHtml(s.island)}</span>
+                  <span class="status-pill status-${s.status}" style="font-size:9px;padding:3px 8px;">${STATUS_LABELS[s.status]}</span>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+          <div class="tag-actions">
+            <button class="btn btn-primary" data-confirm-finish="${t.id}">Confirm \u2014 Finish Trip</button>
+            <button class="btn btn-ghost" data-cancel-finish="${t.id}">Cancel</button>
+          </div>
+        </div>
+      ` : ''}
+      ${!t.finished ? `<textarea readonly rows="9" style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:12.5px;">${escapeHtml(buildAnnouncement(t))}</textarea>` : ''}
+    </div>
+  `;
+  }).join('');
+
+  list.querySelectorAll('[data-mark-transit]').forEach(b => b.addEventListener('click', async () => {
+    if(!confirm('Mark this trip in transit? Every loaded shipment on this trip will move to "In Transit" together.')) return;
+    const moved = await markTripInTransit(b.dataset.markTransit);
+    alert(`Trip marked in transit. ${moved} shipment(s) updated.`);
+    renderTrips();
+  }));
+
+  list.querySelectorAll('[data-mark-finish]').forEach(b => b.addEventListener('click', () => {
+    state.finishDraft[b.dataset.markFinish] = true;
+    renderTrips();
+  }));
+  list.querySelectorAll('[data-cancel-finish]').forEach(b => b.addEventListener('click', () => {
+    delete state.finishDraft[b.dataset.cancelFinish];
+    renderTrips();
+  }));
+  list.querySelectorAll('[data-confirm-finish]').forEach(b => b.addEventListener('click', async () => {
+    await finishTrip(b.dataset.confirmFinish);
+    delete state.finishDraft[b.dataset.confirmFinish];
+    alert('Trip marked finished. Its shipments have moved off the Dashboard and into Reports.');
+    renderTrips();
+  }));
+
+  list.querySelectorAll('[data-set-active]').forEach(b => b.addEventListener('click', async () => {
+    await withFreshTrips(l => { l.forEach(t => t.active = (t.id === b.dataset.setActive)); });
+    renderTrips();
+  }));
+  list.querySelectorAll('[data-del-trip]').forEach(b => b.addEventListener('click', async () => {
+    if(!confirm('Delete this trip?')) return;
+    await withFreshTrips(l => { const i = l.findIndex(t => t.id === b.dataset.delTrip); if(i>-1) l.splice(i,1); });
+    renderTrips();
+  }));
+  list.querySelectorAll('[data-copy-ann]').forEach(b => b.addEventListener('click', () => {
+    const t = trips.find(x => x.id === b.dataset.copyAnn);
+    const text = buildAnnouncement(t);
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(() => alert('Announcement copied.')).catch(() => alert('Could not copy \u2014 select the text box manually.'));
+    } else { alert('Select the text in the box and copy manually.'); }
+  }));
+}
+
+/* ---------------- Invoices (owner only) ---------------- */
+async function renderInvoices(){
+  const panel = document.getElementById('panel');
+
+  // Backfill: older shipments may have items/total but never got an invoiceId
+  // assigned (e.g. created before this feature existed) -- fix that once, here,
+  // so nothing invoiced silently stays invisible on this page.
+  let needsSave = false;
+  state.shipments.forEach(s => {
+    if(s.items && s.items.length && !s.invoiceId){
+      s.invoiceId = invoiceId();
+      if(s.paid === undefined) s.paid = false;
+      needsSave = true;
+    }
+  });
+  if(needsSave) await saveShipments(state.shipments);
+
+  const invoices = state.shipments.filter(s => s.invoiceId && !s.voided);
+  const total = invoices.reduce((sum,s) => sum + (s.total||0), 0);
+  const unpaid = invoices.filter(s => !s.paid);
+  const paid = invoices.filter(s => s.paid);
+  const sorted = state.shipments.filter(s => s.invoiceId).sort((a,b) => new Date(b.loadedAt) - new Date(a.loadedAt));
+
+  panel.innerHTML = `
+    <h2>Invoices</h2>
+    <p class="sub">Generated automatically when a shipment's items are logged.</p>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="slabel">Total Invoiced</div><div class="sval">${fmtMoney(total)}</div></div>
+      <div class="stat-card"><div class="slabel">Unpaid</div><div class="sval" style="color:var(--red);">${unpaid.length}</div></div>
+      <div class="stat-card"><div class="slabel">Paid</div><div class="sval" style="color:var(--green);">${paid.length}</div></div>
+    </div>
+    <div id="invoice-list"></div>
+  `;
+
+  const list = panel.querySelector('#invoice-list');
+  if(sorted.length === 0){ list.innerHTML = `<div class="empty">No invoices yet.</div>`; return; }
+
+  list.innerHTML = sorted.map(s => {
+    const cash = state.cashDraft[s.id];
+    return `
+    <div class="tag" style="${s.voided ? 'opacity:0.5;' : ''}">
+      <div class="tag-top">
+        <div>
+          <div class="tag-code">${s.invoiceId}</div>
+          <div class="tag-meta">${escapeHtml(s.name)} \u00b7 to ${escapeHtml(s.island)}</div>
+        </div>
+        <span class="status-pill ${s.voided ? 'status-pending' : (s.paid ? 'status-delivered' : 'status-in_transit')}">${s.voided ? 'Voided' : (s.paid ? 'Paid \u2014 ' + (s.paymentMethod||'').toUpperCase() : 'Unpaid')}</span>
+      </div>
+      <div class="tag-meta">${fmtDate(s.loadedAt)}</div>
+      <div class="total-line"><span>Total</span><span class="amt">${fmtMoney(s.total)}</span></div>
+      <div class="tag-actions">
+        <button class="btn btn-ghost" data-inv-print="${s.id}">Share</button>
+        ${!s.voided && !s.paid && !cash ? `
+          <button class="btn btn-primary" data-cash-open="${s.id}">Collect \u2014 Cash</button>
+          <button class="btn btn-primary" data-inv-pay="${s.id}" data-method="transfer">Collect \u2014 Transfer</button>
+        ` : ''}
+        ${!s.voided && s.paid ? `<button class="btn btn-ghost" data-inv-unpay="${s.id}">Mark Unpaid</button>` : ''}
+        ${!s.voided ? `<button class="btn btn-danger" data-inv-void="${s.id}">Void</button>` : ''}
+      </div>
+      ${cash ? renderCashForm(s) : ''}
+    </div>
+  `;
+  }).join('');
+
+  list.querySelectorAll('[data-inv-print]').forEach(b => b.addEventListener('click', () => { state.trackQuery = b.dataset.invPrint; location.hash = 'track'; }));
+  list.querySelectorAll('[data-inv-pay]').forEach(b => b.addEventListener('click', async () => {
+    const s = state.shipments.find(x => x.id === b.dataset.invPay);
+    s.paid = true; s.paymentMethod = b.dataset.method; s.paidAt = new Date().toISOString();
+    await saveShipments(state.shipments);
+    renderInvoices();
+  }));
+  list.querySelectorAll('[data-cash-open]').forEach(b => b.addEventListener('click', () => {
+    state.cashDraft[b.dataset.cashOpen] = { received: '' };
+    renderInvoices();
+  }));
+  list.querySelectorAll('[data-cash-cancel]').forEach(b => b.addEventListener('click', () => {
+    delete state.cashDraft[b.dataset.cashCancel];
+    renderInvoices();
+  }));
+  list.querySelectorAll('[id^="cash-input-"]').forEach(inp => inp.addEventListener('input', () => {
+    const id = inp.id.replace('cash-input-','');
+    if(!state.cashDraft[id]) return;
+    state.cashDraft[id].received = inp.value;
+    const s = state.shipments.find(x => x.id === id);
+    const received = parseFloat(inp.value) || 0;
+    const balance = received - (s.total || 0);
+    const label = balance > 0 ? 'Change to give back' : (balance < 0 ? 'Still owing' : 'Exact amount');
+    const color = balance > 0 ? 'var(--green)' : (balance < 0 ? 'var(--red)' : 'var(--navy-deep)');
+    const balEl = document.getElementById('cash-balance-'+id);
+    if(balEl){ balEl.textContent = `${label}: ${fmtMoney(Math.abs(balance))}`; balEl.style.color = color; }
+  }));
+  list.querySelectorAll('[data-cash-confirm]').forEach(b => b.addEventListener('click', async () => {
+    const id = b.dataset.cashConfirm;
+    const s = state.shipments.find(x => x.id === id);
+    const received = parseFloat(state.cashDraft[id].received) || 0;
+    s.paid = true; s.paymentMethod = 'cash'; s.paidAt = new Date().toISOString();
+    s.cashReceived = received; s.cashChange = received - (s.total||0);
+    delete state.cashDraft[id];
+    await saveShipments(state.shipments);
+    renderInvoices();
+  }));
+  list.querySelectorAll('[data-inv-unpay]').forEach(b => b.addEventListener('click', async () => {
+    const s = state.shipments.find(x => x.id === b.dataset.invUnpay);
+    s.paid = false; s.paymentMethod = null; s.paidAt = null;
+    await saveShipments(state.shipments);
+    renderInvoices();
+  }));
+  list.querySelectorAll('[data-inv-void]').forEach(b => b.addEventListener('click', async () => {
+    if(!confirm('Void this invoice? It will be excluded from totals.')) return;
+    const s = state.shipments.find(x => x.id === b.dataset.invVoid);
+    s.voided = true;
+    await saveShipments(state.shipments);
+    renderInvoices();
+  }));
+}
+
+/* ---------------- Reports (owner only) ---------------- */
+function renderReports(){
+  if(state.reportTripView && state.reportIslandView) return renderReportIslandDetail();
+  if(state.reportTripView) return renderReportTripIslands();
+
+  const panel = document.getElementById('panel');
+  const invoiced = state.shipments.filter(s => s.items && s.items.length && !s.voided);
+  const totalRevenue = invoiced.reduce((sum,s) => sum + (s.total||0), 0);
+  const todayStart = startOfToday(), weekStart = startOfWeek();
+  const revToday = invoiced.filter(s => new Date(s.loadedAt) >= todayStart).reduce((sum,s)=>sum+(s.total||0),0);
+  const revWeek = invoiced.filter(s => new Date(s.loadedAt) >= weekStart).reduce((sum,s)=>sum+(s.total||0),0);
+
+  const byIsland = {};
+  invoiced.forEach(s => {
+    byIsland[s.island] = byIsland[s.island] || {count:0, revenue:0};
+    byIsland[s.island].count++;
+    byIsland[s.island].revenue += (s.total||0);
+  });
+  const islandRows = Object.keys(byIsland).sort((a,b) => byIsland[b].revenue - byIsland[a].revenue);
+
+  const finishedTrips = (state.trips||[]).filter(t => t.finished).sort((a,b) => new Date(b.finishedAt) - new Date(a.finishedAt));
+
+  panel.innerHTML = `
+    <h2>Revenue Reports</h2>
+    <p class="sub">Owner-only view. Based on invoiced (loaded) shipments.</p>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="slabel">Total Revenue</div><div class="sval">${fmtMoney(totalRevenue)}</div></div>
+      <div class="stat-card"><div class="slabel">This Week</div><div class="sval">${fmtMoney(revWeek)}</div></div>
+      <div class="stat-card"><div class="slabel">Today</div><div class="sval">${fmtMoney(revToday)}</div></div>
+      <div class="stat-card"><div class="slabel">Shipments Logged</div><div class="sval">${state.shipments.length}</div></div>
+    </div>
+    <div class="settings-block">
+      <h3>By Destination Island</h3>
+      ${islandRows.length === 0 ? '<div class="empty">No invoiced shipments yet.</div>' : `
+        <div class="invoice" style="padding:14px 18px;">
+          <table>
+            <thead><tr><th>Island</th><th class="num">Shipments</th><th class="num">Revenue</th></tr></thead>
+            <tbody>
+              ${islandRows.map(isl => `<tr><td>${escapeHtml(isl)}</td><td class="num">${byIsland[isl].count}</td><td class="num">${fmtMoney(byIsland[isl].revenue)}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      `}
+    </div>
+    <div class="settings-block">
+      <h3>Trip Reports</h3>
+      <p class="sub" style="margin-bottom:12px;">Finished trips. Select one to see delivered/undelivered by destination island.</p>
+      <div id="trip-report-list"></div>
+    </div>
+  `;
+
+  const listEl = panel.querySelector('#trip-report-list');
+  if(finishedTrips.length === 0){
+    listEl.innerHTML = `<div class="empty">No finished trips yet.</div>`;
+    return;
+  }
+  listEl.innerHTML = finishedTrips.map(t => {
+    const tripShipments = state.shipments.filter(s => s.tripId === t.id);
+    const delivered = tripShipments.filter(s => s.status === 'delivered').length;
+    const undelivered = tripShipments.length - delivered;
+    return `
+      <button type="button" class="item-result-row" data-open-trip="${t.id}" style="margin-bottom:8px;">
+        <span>${escapeHtml(t.origin)} \u2192 ${escapeHtml((t.destinations||[]).join(', '))} \u00b7 ${fmtDMY(t.date)}</span>
+        <span class="rprice">${delivered} delivered \u00b7 ${undelivered} undelivered</span>
+      </button>
+    `;
+  }).join('');
+  listEl.querySelectorAll('[data-open-trip]').forEach(b => b.addEventListener('click', () => {
+    state.reportTripView = b.dataset.openTrip;
+    state.reportIslandView = null;
+    renderReports();
+  }));
+}
+
+function renderReportTripIslands(){
+  const panel = document.getElementById('panel');
+  const t = (state.trips||[]).find(x => x.id === state.reportTripView);
+  if(!t){ state.reportTripView = null; renderReports(); return; }
+  const tripShipments = state.shipments.filter(s => s.tripId === t.id);
+
+  panel.innerHTML = `
+    <button class="btn btn-ghost" id="back-to-reports-btn" style="margin-bottom:14px;">\u2190 Back to Reports</button>
+    <h2>${escapeHtml(t.origin)} \u2192 ${escapeHtml((t.destinations||[]).join(', '))}</h2>
+    <p class="sub">${fmtDMY(t.date)} \u00b7 Finished ${t.finishedAt ? fmtDate(t.finishedAt) : ''}</p>
+    <div id="island-list"></div>
+  `;
+  document.getElementById('back-to-reports-btn').addEventListener('click', () => { state.reportTripView = null; renderReports(); });
+
+  const islands = (t.destinations && t.destinations.length) ? t.destinations : [...new Set(tripShipments.map(s => s.island))];
+  const listEl = document.getElementById('island-list');
+  if(islands.length === 0){ listEl.innerHTML = `<div class="empty">No destination islands on this trip.</div>`; return; }
+
+  listEl.innerHTML = islands.map(isl => {
+    const forIsland = tripShipments.filter(s => s.island === isl);
+    const delivered = forIsland.filter(s => s.status === 'delivered').length;
+    const undelivered = forIsland.length - delivered;
+    return `
+      <button type="button" class="item-result-row" data-open-island="${escapeHtml(isl)}" style="margin-bottom:8px;">
+        <span>${escapeHtml(isl)}</span>
+        <span class="rprice">${delivered} delivered \u00b7 ${undelivered} undelivered</span>
+      </button>
+    `;
+  }).join('');
+  listEl.querySelectorAll('[data-open-island]').forEach(b => b.addEventListener('click', () => {
+    state.reportIslandView = b.dataset.openIsland;
+    renderReports();
+  }));
+}
+
+function renderReportIslandDetail(){
+  const panel = document.getElementById('panel');
+  const t = (state.trips||[]).find(x => x.id === state.reportTripView);
+  if(!t){ state.reportTripView = null; state.reportIslandView = null; renderReports(); return; }
+  const island = state.reportIslandView;
+  const shipments = state.shipments.filter(s => s.tripId === t.id && s.island === island);
+  const delivered = shipments.filter(s => s.status === 'delivered');
+  const undelivered = shipments.filter(s => s.status !== 'delivered');
+
+  const daysSinceFinished = t.finishedAt ? (Date.now() - new Date(t.finishedAt).getTime()) / 86400000 : 0;
+  const archiveEligible = daysSinceFinished >= 3;
+  const toArchive = undelivered.filter(s => s.photo && !s.imageArchived);
+
+  const renderUndeliveredRow = (s) => `
+    <div class="tag">
+      <div class="tag-top">
+        <div class="tag-code">${s.id}</div>
+        <span class="status-pill status-${s.status}">${STATUS_LABELS[s.status]}</span>
+      </div>
+      <div class="party-block"><span class="party-role">Sender</span><span class="party-name">${escapeHtml(s.name)}</span><br>${escapeHtml(s.mobile||'')}</div>
+      ${s.receiverName ? `<div class="party-block"><span class="party-role">Receiver</span><span class="party-name">${escapeHtml(s.receiverName)}</span><br>${escapeHtml(s.receiverMobile||'')}</div>` : ''}
+      ${s.items && s.items.length ? `<div class="tag-items">Items: ${s.items.map(i=>`${i.qty}\u00d7 ${escapeHtml(i.name)}`).join(', ')}</div>` : ''}
+      ${photoLinkHtml(s)}
+      ${s.imageArchived ? `<div class="note" style="margin-top:8px;">Image downloaded to owner's phone.</div>` : ''}
+    </div>
+  `;
+
+  const renderDeliveredRow = (s) => `
+    <div class="tag">
+      <div class="tag-top">
+        <div class="tag-code">${s.id}</div>
+        <span class="status-pill status-${s.status}">${STATUS_LABELS[s.status]}</span>
+      </div>
+      <div class="party-block"><span class="party-role">Sender</span><span class="party-name">${escapeHtml(s.name)}</span></div>
+      ${s.receiverName ? `<div class="party-block"><span class="party-role">Receiver</span><span class="party-name">${escapeHtml(s.receiverName)}</span></div>` : ''}
+      ${s.items && s.items.length ? `<div class="tag-items">Items: ${s.items.map(i=>`${i.qty}\u00d7 ${escapeHtml(i.name)}`).join(', ')}</div>` : ''}
+    </div>
+  `;
+
+  panel.innerHTML = `
+    <button class="btn btn-ghost" id="back-to-islands-btn" style="margin-bottom:14px;">\u2190 Back to Islands</button>
+    <h2>${escapeHtml(island)}</h2>
+    <p class="sub">${escapeHtml(t.origin)} \u2192 ${escapeHtml((t.destinations||[]).join(', '))} \u00b7 ${fmtDMY(t.date)}</p>
+    <div class="settings-block">
+      <h3>Undelivered (${undelivered.length})</h3>
+      ${(archiveEligible && toArchive.length) ? `
+        <button class="btn btn-amber" id="archive-photos-btn" style="margin-bottom:14px;">Download &amp; Archive ${toArchive.length} Photo${toArchive.length===1?'':'s'} to This Phone</button>
+      ` : ''}
+      ${undelivered.length === 0 ? '<div class="empty">Nothing undelivered for this island.</div>' : undelivered.map(renderUndeliveredRow).join('')}
+    </div>
+    <div class="settings-block">
+      <h3>Delivered (${delivered.length})</h3>
+      ${delivered.length === 0 ? '<div class="empty">Nothing delivered yet for this island.</div>' : delivered.map(renderDeliveredRow).join('')}
+    </div>
+  `;
+  document.getElementById('back-to-islands-btn').addEventListener('click', () => { state.reportIslandView = null; renderReports(); });
+
+  document.getElementById('archive-photos-btn')?.addEventListener('click', async () => {
+    for(const s of toArchive){
+      downloadPhoto(s);
+      s.photo = null;
+      s.imageArchived = true;
+    }
+    await saveShipments(state.shipments);
+    renderReportIslandDetail();
+  });
+}
+
+// Filenames use both parties' name + mobile, sanitized for the filesystem.
+function safeFilenamePart(str){
+  return (str||'').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g,'') || 'unknown';
+}
+function photoFilename(s){
+  const senderPart = `${safeFilenamePart(s.name)}-${safeFilenamePart(s.mobile)}`;
+  const receiverPart = `${safeFilenamePart(s.receiverName)}-${safeFilenamePart(s.receiverMobile)}`;
+  return `${senderPart}_${receiverPart}.jpg`;
+}
+// Shows the photo as a tappable filename link rather than an inline image --
+// nobody has to scroll past a photo they didn't ask to see; tapping opens it
+// in a new tab to actually view/save it.
+function photoLinkHtml(s){
+  if(!s.photo) return '';
+  return `<a href="${s.photo}" target="_blank" rel="noopener" class="party-phone" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;">\ud83d\udcf7 ${escapeHtml(photoFilename(s))}</a>`;
+}
+function downloadPhoto(s){
+  if(!s.photo) return;
+  const a = document.createElement('a');
+  a.href = s.photo;
+  a.download = photoFilename(s);
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+/* ---------------- Settings (owner only) ---------------- */
+const SETTINGS_SUBTABS = [
+  {id:'owner', label:'Owner Settings'},
+  {id:'staff', label:'Staff Management'},
+  {id:'rates', label:'Rates & Setup'},
+];
+
+function renderSettings(){
+  const panel = document.getElementById('panel');
+  if(!SETTINGS_SUBTABS.some(t => t.id === state.settingsTab)) state.settingsTab = 'owner';
+  const subtabs = SETTINGS_SUBTABS.map(t =>
+    `<button class="${t.id===state.settingsTab?'active':''}" data-subtab="${t.id}">${t.label}</button>`
+  ).join('');
+  panel.innerHTML = `
+    <h2>Settings</h2>
+    <p class="sub">Owner-only. Manage staff access, item prices, and app links.</p>
+    <div class="sub-tabs">${subtabs}</div>
+    <div id="settings-body"></div>
+  `;
+  panel.querySelectorAll('[data-subtab]').forEach(b => b.addEventListener('click', () => {
+    state.settingsTab = b.dataset.subtab;
+    renderSettings();
+  }));
+
+  if(state.settingsTab === 'owner') renderOwnerSettings();
+  else if(state.settingsTab === 'staff') renderStaffManagement();
+  else renderRatesSetup();
+}
+
+function renderStaffManagement(){
+  const body = document.getElementById('settings-body');
+  const staffUrl = baseUrl() + '#' + INTERNAL_HASH;
+
+  body.innerHTML = `
+    <div class="settings-block">
+      <h3>Pending Access Requests</h3>
+      <p class="sub" style="margin-bottom:14px;">Anyone with the staff link can request access on their own. They can't sign in until you approve them here and share the generated PIN.</p>
+      <div id="pending-list"></div>
+    </div>
+
+    <div class="settings-block">
+      <h3>Staff Management</h3>
+      <p class="sub" style="margin-bottom:14px;">You can also add a staff member directly here without waiting for a request. No email is actually sent \u2014 a sign-in PIN is generated instantly for you to share with them.</p>
+      <div id="staff-list"></div>
+      <button class="btn btn-primary" id="open-invite-btn" style="margin-top:10px;">+ Invite Staff Member</button>
+      <div id="invite-modal-wrap"></div>
+    </div>
+
+    <div class="settings-block">
+      <h3>Staff Links</h3>
+      <div class="url-box"><div><div class="tag-label">Staff sign-in / request-access link</div><div class="u">${escapeHtml(staffUrl)}</div></div></div>
+      <div class="url-box"><div><div class="tag-label">Staff \u2014 for Add to Home Screen</div><div class="u">${escapeHtml(baseUrl() + 'staff/')}</div></div></div>
+      <div class="note">Share the sign-in link with staff. Use the "Add to Home Screen" link specifically when saving an icon on a phone \u2014 iOS doesn't reliably remember the # link for that.</div>
+    </div>
+  `;
+
+  const renderPendingList = () => {
+    const list = state.settings.pendingStaff || [];
+    const el = document.getElementById('pending-list');
+    if(!list.length){ el.innerHTML = `<div class="staff-empty">No pending requests.</div>`; return; }
+    el.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${list.map((r,idx) => `
+          <div class="staff-row" style="flex-wrap:wrap;">
+            <span class="sname">${escapeHtml(r.name)}</span>
+            <span class="tag-meta" style="flex:1;min-width:140px;">${escapeHtml(r.email)}${r.mobile ? ' \u00b7 '+escapeHtml(r.mobile) : ''}</span>
+            <button class="btn btn-primary" data-approve="${idx}" style="padding:8px 12px;">Approve</button>
+            <button class="btn btn-danger" data-decline="${idx}" style="padding:8px 12px;">Decline</button>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    el.querySelectorAll('[data-decline]').forEach(b => b.addEventListener('click', async () => {
+      const idx = parseInt(b.dataset.decline,10);
+      b.disabled = true;
+      await withFreshSettings(fresh => {
+        const list = fresh.pendingStaff || [];
+        const target = (state.settings.pendingStaff||[])[idx];
+        if(target){ const pos = list.findIndex(r => r.id === target.id); if(pos>-1) list.splice(pos,1); }
+      });
+      renderPendingList();
+    }));
+    el.querySelectorAll('[data-approve]').forEach(b => b.addEventListener('click', async () => {
+      const idx = parseInt(b.dataset.approve,10);
+      b.disabled = true;
+      let newPin = '';
+      let approvedName = '';
+      await withFreshSettings(fresh => {
+        const pending = fresh.pendingStaff || [];
+        const target = (state.settings.pendingStaff||[])[idx];
+        if(!target) return;
+        const pos = pending.findIndex(r => r.id === target.id);
+        if(pos > -1) pending.splice(pos,1);
+        const users = fresh.staffUsers || (fresh.staffUsers = []);
+        const usedPins = new Set(users.map(u => u.pin).concat([fresh.ownerPin]));
+        do { newPin = String(Math.floor(1000 + Math.random()*9000)); } while(usedPins.has(newPin));
+        users.push({id:'staff-'+Date.now(), name:target.name, email:target.email, mobile:target.mobile, pin:newPin, status:'approved'});
+        approvedName = target.name;
+      });
+      renderPendingList();
+      renderStaffList();
+      if(newPin) alert(`${approvedName} approved.\n\nShare this PIN with them to sign in: ${newPin}`);
+    }));
+  };
+  renderPendingList();
+
+  const renderStaffList = () => {
+    const list = state.settings.staffUsers || [];
+    const el = document.getElementById('staff-list');
+    if(!list.length){ el.innerHTML = `<div class="staff-empty">No staff accounts yet. Invite one below to give a staff member access.</div>`; return; }
+    el.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${list.map((u,idx) => `
+          <div class="staff-row" style="flex-wrap:wrap;">
+            <span class="sname">${escapeHtml(u.name)}</span>
+            <span class="tag-meta" style="flex:1;min-width:140px;">${escapeHtml(u.email||'\u2014')}</span>
+            <span class="status-pill status-delivered">Approved</span>
+            <span class="spin">PIN ${escapeHtml(u.pin)}</span>
+            <button class="btn btn-danger" data-staff-del="${idx}" style="padding:8px 12px;">Remove</button>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    el.querySelectorAll('[data-staff-del]').forEach(b => b.addEventListener('click', async () => {
+      const idx = parseInt(b.dataset.staffDel,10);
+      b.disabled = true;
+      await withFreshSettings(fresh => {
+        const list = fresh.staffUsers || (fresh.staffUsers = []);
+        const target = (state.settings.staffUsers || [])[idx];
+        if(target){
+          const pos = list.findIndex(u => (target.id && u.id === target.id) || (u.name === target.name && u.pin === target.pin));
+          if(pos > -1) list.splice(pos, 1);
+        }
+      });
+      renderStaffList();
+    }));
+  };
+  renderStaffList();
+
+  function closeInviteModal(){ document.getElementById('invite-modal-wrap').innerHTML = ''; }
+
+  document.getElementById('open-invite-btn').addEventListener('click', () => {
+    document.getElementById('invite-modal-wrap').innerHTML = `
+      <div class="settings-block" style="border:1.5px solid var(--line);border-radius:10px;padding:16px;margin-top:12px;background:#fff;">
+        <h3 style="margin-bottom:12px;">Invite Staff Member</h3>
+        <label>Staff member name</label>
+        <input type="text" id="invite-name" placeholder="e.g. Ahmed">
+        <label>Email address</label>
+        <input type="text" id="invite-email" placeholder="e.g. ahmed@example.com">
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" id="invite-cancel-btn" style="flex:1;">Cancel</button>
+          <button class="btn btn-primary" id="invite-create-btn" style="flex:1;">Create Invite</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('invite-cancel-btn').addEventListener('click', closeInviteModal);
+    document.getElementById('invite-create-btn').addEventListener('click', async () => {
+      const name = document.getElementById('invite-name').value.trim();
+      const email = document.getElementById('invite-email').value.trim();
+      if(!name || !email){ alert('Enter both a name and an email address.'); return; }
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert('Enter a valid email address.'); return; }
+      let blocked = false, newPin = '';
+      await withFreshSettings(fresh => {
+        const users = fresh.staffUsers || (fresh.staffUsers = []);
+        const usedPins = new Set(users.map(u => u.pin).concat([fresh.ownerPin]));
+        do { newPin = String(Math.floor(1000 + Math.random()*9000)); } while(usedPins.has(newPin));
+        users.push({id:'staff-'+Date.now(), name, email, pin:newPin, status:'approved'});
+      });
+      closeInviteModal();
+      renderStaffList();
+      alert(`Invite created for ${name}.\n\nShare this PIN with them to sign in: ${newPin}`);
+    });
+  });
+}
+
+function renderOwnerSettings(){
+  const body = document.getElementById('settings-body');
+  const ownerUrl = baseUrl() + '#' + OWNER_HASH;
+  const edit = state.settingsEdit;
+
+  const pinField = edit.ownerPin ? `
+      <label>Owner PIN (your own sign-in)</label>
+      <input type="text" id="owner-pin-input" inputmode="numeric" maxlength="6" value="${escapeHtml(state.settings.ownerPin)}">
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" id="save-owner-pin-btn" style="flex:1;">Save Owner PIN</button>
+        <button class="btn btn-ghost" id="cancel-owner-pin-btn">Cancel</button>
+      </div>
+    ` : `
+      <label>Owner PIN (your own sign-in)</label>
+      <div class="view-field">
+        <span class="vf-value">${state.pinRevealed ? escapeHtml(state.settings.ownerPin) : '\u2022'.repeat(state.settings.ownerPin.length || 4)}</span>
+        <span style="display:flex;align-items:center;">
+          <button class="vf-show" id="toggle-pin-reveal">${state.pinRevealed ? 'Hide' : 'Show'}</button>
+          <button class="vf-edit" id="edit-owner-pin-btn">Edit</button>
+        </span>
+      </div>
+    `;
+
+  const emailSet = !!state.settings.ownerEmail;
+  const emailField = (edit.ownerEmail || !emailSet) ? `
+      <label style="margin-top:14px;">Registered Gmail (for PIN reset)</label>
+      <input type="email" id="owner-email-input" placeholder="you@gmail.com" value="${escapeHtml(state.settings.ownerEmail)}">
+      <p class="sub" style="margin:6px 0 12px;">If you ever forget your PIN, a reset link is emailed to this address from the Owner sign-in screen. Leave blank to disable that option.</p>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" id="save-owner-email-btn" style="flex:1;">Save Registered Gmail</button>
+        ${emailSet ? `<button class="btn btn-ghost" id="cancel-owner-email-btn">Cancel</button>` : ''}
+      </div>
+    ` : `
+      <label style="margin-top:14px;">Registered Gmail (for PIN reset)</label>
+      <div class="view-field">
+        <span class="vf-value" style="font-family:'Inter',sans-serif;">${escapeHtml(state.settings.ownerEmail)}</span>
+        <button class="vf-edit" id="edit-owner-email-btn">Edit</button>
+      </div>
+    `;
+
+  const bankSet = !!(state.settings.bankAccountName || state.settings.bankAccountNumber);
+  const bankField = (edit.bank || !bankSet) ? `
+      <label>Account name</label>
+      <input type="text" id="bank-name-input" placeholder="e.g. Ahmed Ibrahim" value="${escapeHtml(state.settings.bankAccountName)}">
+      <label>Account number</label>
+      <input type="text" id="bank-number-input" placeholder="e.g. 7730000123456" value="${escapeHtml(state.settings.bankAccountNumber)}">
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" id="save-bank-details-btn" style="flex:1;">Save Payment Details</button>
+        ${bankSet ? `<button class="btn btn-ghost" id="cancel-bank-btn">Cancel</button>` : ''}
+      </div>
+    ` : `
+      <label>Account name</label>
+      <div class="view-field"><span class="vf-value" style="font-family:'Inter',sans-serif;">${escapeHtml(state.settings.bankAccountName) || '\u2014'}</span></div>
+      <label>Account number</label>
+      <div class="view-field">
+        <span class="vf-value">${escapeHtml(state.settings.bankAccountNumber) || '\u2014'}</span>
+        <button class="vf-edit" id="edit-bank-btn">Edit</button>
+      </div>
+    `;
+
+  const tripD = state.settings.tripDefaults || {};
+  const tripSet = !!(tripD.boatContacts || tripD.trackingLink || tripD.viberLink);
+  const tripField = (edit.trip || !tripSet) ? `
+      <label>Boat contact numbers</label>
+      <input type="text" id="trip-contacts-input" placeholder="e.g. 7241234 / 9201234 / 7799988" value="${escapeHtml(tripD.boatContacts||'')}">
+      <label>Tracking link</label>
+      <input type="text" id="trip-tracking-input" placeholder="e.g. https://m.followme.mv/public/..." value="${escapeHtml(tripD.trackingLink||'')}">
+      <label>Viber group link</label>
+      <input type="text" id="trip-viber-input" placeholder="e.g. https://invite.viber.com/..." value="${escapeHtml(tripD.viberLink||'')}">
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" id="save-trip-defaults-btn" style="flex:1;">Save Trip Defaults</button>
+        ${tripSet ? `<button class="btn btn-ghost" id="cancel-trip-defaults-btn">Cancel</button>` : ''}
+      </div>
+    ` : `
+      <label>Boat contact numbers</label>
+      <div class="view-field"><span class="vf-value">${escapeHtml(tripD.boatContacts) || '\u2014'}</span></div>
+      <label>Tracking link</label>
+      <div class="view-field"><span class="vf-value" style="word-break:break-all;">${escapeHtml(tripD.trackingLink) || '\u2014'}</span></div>
+      <label>Viber group link</label>
+      <div class="view-field">
+        <span class="vf-value" style="word-break:break-all;">${escapeHtml(tripD.viberLink) || '\u2014'}</span>
+        <button class="vf-edit" id="edit-trip-defaults-btn">Edit</button>
+      </div>
+    `;
+
+  body.innerHTML = `
+    <div class="settings-block">
+      <h3>Your Owner PIN</h3>
+      ${pinField}
+      ${emailField}
+    </div>
+
+    <div class="settings-block">
+      <h3>Payment Details</h3>
+      <p class="sub" style="margin-bottom:12px;">Shown on shared invoice images so customers know where to send bank transfers. Leave blank to hide this from invoices.</p>
+      ${bankField}
+    </div>
+
+    <div class="settings-block">
+      <h3>Trip Defaults</h3>
+      <p class="sub" style="margin-bottom:12px;">Fixed details used on every trip announcement, since these rarely change. Set once here instead of retyping them each time you plan a trip.</p>
+      ${tripField}
+    </div>
+
+    <div class="settings-block">
+      <h3>Owner Links</h3>
+      <div class="url-box"><div><div class="tag-label">Owner sign-in link</div><div class="u">${escapeHtml(ownerUrl)}</div></div></div>
+      <div class="url-box"><div><div class="tag-label">Owner \u2014 for Add to Home Screen</div><div class="u">${escapeHtml(baseUrl() + 'owner/')}</div></div></div>
+      <div class="note">Keep this link private to yourself. Use the "Add to Home Screen" link specifically when saving an icon on your phone \u2014 iOS doesn't reliably remember the # link for that.</div>
+    </div>
+  `;
+
+  const byId = (id) => document.getElementById(id);
+
+  byId('edit-owner-pin-btn')?.addEventListener('click', () => { state.settingsEdit.ownerPin = true; renderOwnerSettings(); });
+  byId('cancel-owner-pin-btn')?.addEventListener('click', () => { state.settingsEdit.ownerPin = false; renderOwnerSettings(); });
+  byId('toggle-pin-reveal')?.addEventListener('click', () => { state.pinRevealed = !state.pinRevealed; renderOwnerSettings(); });
+  byId('save-owner-pin-btn')?.addEventListener('click', async () => {
+    const val = byId('owner-pin-input').value.trim() || DEFAULT_SETTINGS.ownerPin;
+    if(!/^\d{4,6}$/.test(val)){ alert('PIN must be 4\u20136 digits.'); return; }
+    let blocked = false;
+    await withFreshSettings(fresh => {
+      if((fresh.staffUsers||[]).some(u => u.pin === val)){ blocked = true; return; }
+      fresh.ownerPin = val;
+    });
+    if(blocked){ alert('That PIN is used by a staff account. Pick another.'); return; }
+    state.settingsEdit.ownerPin = false;
+    state.pinRevealed = false;
+    renderOwnerSettings();
+  });
+
+  byId('edit-owner-email-btn')?.addEventListener('click', () => { state.settingsEdit.ownerEmail = true; renderOwnerSettings(); });
+  byId('cancel-owner-email-btn')?.addEventListener('click', () => { state.settingsEdit.ownerEmail = false; renderOwnerSettings(); });
+  byId('save-owner-email-btn')?.addEventListener('click', async () => {
+    const val = byId('owner-email-input').value.trim();
+    if(val && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)){ alert('Enter a valid email address, or leave it blank.'); return; }
+    await withFreshSettings(fresh => { fresh.ownerEmail = val; });
+    state.settingsEdit.ownerEmail = false;
+    renderOwnerSettings();
+  });
+
+  byId('edit-bank-btn')?.addEventListener('click', () => { state.settingsEdit.bank = true; renderOwnerSettings(); });
+  byId('cancel-bank-btn')?.addEventListener('click', () => { state.settingsEdit.bank = false; renderOwnerSettings(); });
+  byId('save-bank-details-btn')?.addEventListener('click', async () => {
+    const name = byId('bank-name-input').value.trim();
+    const number = byId('bank-number-input').value.trim();
+    await withFreshSettings(fresh => { fresh.bankAccountName = name; fresh.bankAccountNumber = number; });
+    state.settingsEdit.bank = false;
+    renderOwnerSettings();
+  });
+
+  byId('edit-trip-defaults-btn')?.addEventListener('click', () => { state.settingsEdit.trip = true; renderOwnerSettings(); });
+  byId('cancel-trip-defaults-btn')?.addEventListener('click', () => { state.settingsEdit.trip = false; renderOwnerSettings(); });
+  byId('save-trip-defaults-btn')?.addEventListener('click', async () => {
+    const boatContacts = byId('trip-contacts-input').value.trim();
+    const trackingLink = byId('trip-tracking-input').value.trim();
+    const viberLink = byId('trip-viber-input').value.trim();
+    await withFreshSettings(fresh => { fresh.tripDefaults = { boatContacts, trackingLink, viberLink }; });
+    state.settingsEdit.trip = false;
+    renderOwnerSettings();
+  });
+}
+
+function renderRatesSetup(){
+  const body = document.getElementById('settings-body');
+  body.innerHTML = `
+    <div class="settings-block">
+      <h3>Item Rates</h3>
+      <div id="rates-list"></div>
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-top:10px;">
+        <div style="flex:1;"><label>New item name</label><input type="text" id="new-rate-name" style="margin-bottom:0;"></div>
+        <div style="width:100px;"><label>Price</label><input type="text" id="new-rate-price" style="margin-bottom:0;"></div>
+        <button class="btn btn-ghost" id="add-rate-btn" style="height:44px;">Add</button>
+      </div>
+    </div>
+
+    <div class="settings-block">
+      <h3>QR Link Override</h3>
+      <label>Public URL customers should scan (once published/hosted)</label>
+      <input type="text" id="qr-url-input" placeholder="https://yourdomain.com/cargo-log" value="${escapeHtml(state.settings.qrUrl)}">
+      <button class="btn btn-primary" id="save-qr-btn">Save Link</button>
+      <div class="note">Leave blank to just use this page's own address for the customer link shown above.</div>
+    </div>
+  `;
+
+  const renderRatesList = () => {
+    document.getElementById('rates-list').innerHTML = state.rates.map((r,idx) => `
+      <div class="rate-edit-row">
+        <input type="text" data-rate-name="${idx}" value="${escapeHtml(r.name)}">
+        <input type="text" class="price-input" data-rate-price="${idx}" value="${r.price}">
+        <button class="btn btn-danger" data-rate-del="${idx}" style="padding:9px 12px;">Remove</button>
+      </div>
+    `).join('');
+    document.querySelectorAll('[data-rate-name]').forEach(inp => inp.addEventListener('change', async () => { state.rates[inp.dataset.rateName].name = inp.value; await saveRates(state.rates); }));
+    document.querySelectorAll('[data-rate-price]').forEach(inp => inp.addEventListener('change', async () => { state.rates[inp.dataset.ratePrice].price = parseFloat(inp.value) || 0; await saveRates(state.rates); }));
+    document.querySelectorAll('[data-rate-del]').forEach(b => b.addEventListener('click', async () => { state.rates.splice(b.dataset.rateDel,1); await saveRates(state.rates); renderRatesList(); }));
+  };
+  renderRatesList();
+
+  document.getElementById('add-rate-btn').addEventListener('click', async () => {
+    const name = document.getElementById('new-rate-name').value.trim();
+    const price = parseFloat(document.getElementById('new-rate-price').value) || 0;
+    if(!name) return;
+    state.rates.push({id:'rate-'+Date.now(), name, price});
+    await saveRates(state.rates);
+    document.getElementById('new-rate-name').value=''; document.getElementById('new-rate-price').value='';
+    renderRatesList();
+  });
+
+  document.getElementById('save-qr-btn').addEventListener('click', async () => {
+    state.settings.qrUrl = document.getElementById('qr-url-input').value.trim();
+    await saveSettings(state.settings);
+    renderSettings();
+  });
+}
+
+/* ---------------- Main render dispatch ---------------- */
+function render(){
+  if(state.entryMode === 'internal' && !INTERNAL_ROLES.includes(state.role)){
+    renderGate();
+    return;
+  }
+  document.getElementById('gate-area').innerHTML = '';
+  document.getElementById('tabs').style.display = 'flex';
+  document.getElementById('panel').style.display = 'block';
+
+  if(state.entryMode === 'customer'){ renderModeToggle(); }
+  else { document.getElementById('mode-toggle').style.display = 'none'; }
+
+  renderTabs();
+
+  const allowed = ROLE_TABS[state.role].map(t => t.id);
+  if(!allowed.includes(state.tab)) state.tab = DEFAULT_TAB[state.role];
+  if(state.tab !== 'reports'){ state.reportTripView = null; state.reportIslandView = null; }
+
+  if(state.tab === 'dashboard'){ renderDashboard(); wireLoadFormEvents(); }
+  else if(state.tab === 'checkin'){ renderCheckin(); }
+  else if(state.tab === 'track'){ renderTrack(); }
+  else if(state.tab === 'reports'){ renderReports(); }
+  else if(state.tab === 'invoices'){ renderInvoices(); }
+  else if(state.tab === 'trips'){ renderTrips(); }
+  else if(state.tab === 'settings'){ renderSettings(); }
+}
+
+const _origRenderDashboard = renderDashboard;
+renderDashboard = function(){ _origRenderDashboard(); wireLoadFormEvents(); };
+
+/* ---------------- Routing ---------------- */
+function handleHash(){
+  const h = (location.hash || '').replace('#','');
+
+  if(h.startsWith('reset-pin/')){
+    const token = decodeURIComponent(h.slice('reset-pin/'.length));
+    state.entryMode = 'internal'; state.gateRole = 'owner'; state.role = null;
+    state.gateStage = 'reset-confirm'; state.resetToken = token;
+    state.resetMsg = ''; state.resetError = '';
+    render();
+    return;
+  }
+
+  if(h === OWNER_HASH){
+    if(!(state.role === 'owner')){
+      state.entryMode = 'internal'; state.gateRole = 'owner'; state.role = null; state.gateStage = 'pick';
+    }
+    render();
+    return;
+  }
+  if(h === INTERNAL_HASH){
+    if(!(state.role === 'staff')){
+      state.entryMode = 'internal'; state.gateRole = 'staff'; state.role = null; state.gateStage = 'pick'; state.gateMode = 'signin';
+    }
+    render();
+    return;
+  }
+
+  if(state.entryMode === 'internal' && INTERNAL_ROLES.includes(state.role)){
+    if(ROLE_TABS[state.role].some(t => t.id === h)) state.tab = h;
+    render();
+    return;
+  }
+  if(state.entryMode === 'internal' && !INTERNAL_ROLES.includes(state.role)){
+    render();
+    return;
+  }
+
+  // customer mode
+  state.entryMode = 'customer';
+  if(!state.role){ state.role = 'sender'; state.tab = 'checkin'; }
+  if(ROLE_TABS[state.role].some(t => t.id === h)) state.tab = h;
+  render();
+}
+
+window.addEventListener('hashchange', handleHash);
+
+function tickClock(){
+  document.getElementById('clock').textContent = new Date().toLocaleString(undefined,{weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+}
+
+async function init(){
+  await refreshData();
+
+  const session = loadSession();
+  const isResetLink = (location.hash || '').replace('#','').startsWith('reset-pin/');
+  if(!isResetLink && session && (session.role === 'owner' || session.role === 'staff')){
+    // Re-check the session still makes sense (e.g. a staff PIN could have
+    // been removed from another device while this one stayed logged in).
+    const stillValid = session.role === 'owner'
+      ? true
+      : !session.staffName || (state.settings.staffUsers||[]).some(u => u.name === session.staffName);
+    if(stillValid){
+      state.entryMode = 'internal';
+      state.gateRole = session.gateRole || session.role;
+      state.role = session.role;
+      state.staffName = session.staffName;
+      const h = (location.hash || '').replace('#','');
+      const tabs = ROLE_TABS[state.role].map(t => t.id);
+      state.tab = tabs.includes(h) ? h : DEFAULT_TAB[state.role];
+      if(('#'+state.tab) !== location.hash) history.replaceState(null,'','#'+state.tab);
+      render();
+    } else {
+      clearSession();
+      handleHash();
+    }
+  } else {
+    handleHash();
+  }
+
+  tickClock();
+  setInterval(tickClock, 30000);
+  setInterval(async () => {
+    const [freshShipments, freshSettings] = await Promise.all([loadShipments(), loadSettings()]);
+    const shipmentsChanged = JSON.stringify(freshShipments) !== JSON.stringify(state.shipments);
+    const settingsChanged = JSON.stringify(freshSettings) !== JSON.stringify(state.settings);
+    if(shipmentsChanged) state.shipments = freshShipments;
+    if(settingsChanged) state.settings = freshSettings;
+    if(shipmentsChanged || settingsChanged){
+      const typingInField = document.activeElement && ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName) && document.getElementById('panel').contains(document.activeElement);
+      if(state.role && !typingInField && (state.tab === 'dashboard' || state.tab === 'track' || state.tab === 'reports' || state.tab === 'settings')){ render(); }
+      else if(state.role){ renderTabs(); }
+    }
+  }, 5000);
+}
+init();
+</script>
+</body>
+</html>
