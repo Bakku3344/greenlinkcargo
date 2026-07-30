@@ -19,6 +19,7 @@
 const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const { neon } = require('@neondatabase/serverless');
 
 const sql = neon(process.env.DATABASE_URL);
@@ -31,44 +32,25 @@ const app = express();
 // headroom for many photos in a single save.
 app.use(express.json({ limit: '25mb' }));
 
-// --- Owner PIN reset (emailed via Resend) -----------------------------------
-// RESEND_API_KEY is the API key from https://resend.com/api-keys.
-// RESEND_FROM is the "from" address used to send -- when you haven't
-// verified your own sending domain on Resend, use their shared test domain
-// address 'onboarding@resend.dev' (works out of the box, but Resend will
-// only deliver it to the email address you signed up to Resend with). Once
-// you verify a domain on Resend you can switch this to any address on it.
-// The reset link is sent TO whatever address the Owner has registered in
-// Settings ("Registered Gmail"). APP_URL is the public URL of the front-end
-// (your GitHub Pages site), used to build the link, e.g.
-// https://YOUR-USERNAME.github.io/greenlinkcargo
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM = process.env.RESEND_FROM || 'GreenLine Cargo <onboarding@resend.dev>';
+// --- Owner PIN reset (emailed via Gmail) -----------------------------------
+// GMAIL_USER / GMAIL_APP_PASSWORD are the credentials the app itself sends
+// FROM (a Gmail account with an "App Password" generated at
+// https://myaccount.google.com/apppasswords — this requires 2-Step
+// Verification to be on). The reset link is sent TO whatever address the
+// Owner has registered in Settings ("Registered Gmail"). APP_URL is the
+// public URL of the front-end (your GitHub Pages site), used to build the
+// link, e.g. https://YOUR-USERNAME.github.io
+const GMAIL_USER = process.env.GMAIL_USER;
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
 const APP_URL = (process.env.APP_URL || '').replace(/\/+$/, '');
 const RESET_TOKEN_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
-async function sendResetEmail(to, link){
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: RESEND_FROM,
-      to: [to],
-      subject: 'Reset your GreenLine Cargo Owner PIN',
-      text: `A reset was requested for your GreenLine Cargo Owner PIN.\n\nOpen this link to set a new PIN (it expires in 30 minutes):\n${link}\n\nIf you didn't request this, you can safely ignore this email.`,
-      html: `<p>A reset was requested for your GreenLine Cargo Owner PIN.</p>
-             <p><a href="${link}">Click here to set a new PIN</a> (expires in 30 minutes).</p>
-             <p>If you didn't request this, you can safely ignore this email.</p>`,
-    }),
-  });
-  if(!res.ok){
-    const body = await res.text().catch(() => '');
-    throw new Error(`Resend API error ${res.status}: ${body}`);
-  }
-}
+const mailer = (GMAIL_USER && GMAIL_APP_PASSWORD)
+  ? nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+    })
+  : null;
 
 // Restrict this to your actual GitHub Pages origin in production,
 // e.g. cors({ origin: 'https://bakku3344.github.io' })
@@ -117,7 +99,7 @@ app.put('/api/data/:key', async (req, res) => {
 });
 
 // Request a reset link. Always responds the same way regardless of whether
-// the email matches, whether Resend is configured, or whether sending
+// the email matches, whether Gmail is configured, or whether sending
 // succeeds -- this endpoint must never reveal what the registered address
 // is or whether an account exists.
 app.post('/api/reset-pin/request', async (req, res) => {
@@ -130,8 +112,7 @@ app.post('/api/reset-pin/request', async (req, res) => {
     const settings = rows.length ? rows[0].value : {};
     const registered = (settings.ownerEmail || '').trim().toLowerCase();
 
-    if (!registered || registered !== email || !RESEND_API_KEY || !APP_URL) {
-      if (!RESEND_API_KEY) console.error('Reset requested but RESEND_API_KEY is not set.');
+    if (!registered || registered !== email || !APP_URL) {
       if (!APP_URL) console.error('Reset requested but APP_URL is not set.');
       return res.json(generic);
     }
@@ -147,9 +128,26 @@ app.post('/api/reset-pin/request', async (req, res) => {
     `;
 
     const link = `${APP_URL}/#reset-pin/${token}`;
-    await sendResetEmail(registered, link);
 
-    res.json(generic);
+    // Email is a best-effort bonus, not a requirement -- if Gmail isn't
+    // configured or sending fails for any reason, the link is still
+    // returned directly below so the Owner (who just proved they know the
+    // registered address) can open it themselves or share it via WhatsApp.
+    if (mailer) {
+      mailer.sendMail({
+        from: `"GreenLine Cargo" <${GMAIL_USER}>`,
+        to: registered,
+        subject: 'Reset your GreenLine Cargo Owner PIN',
+        text: `A reset was requested for your GreenLine Cargo Owner PIN.\n\nOpen this link to set a new PIN (it expires in 30 minutes):\n${link}\n\nIf you didn't request this, you can safely ignore this email.`,
+        html: `<p>A reset was requested for your GreenLine Cargo Owner PIN.</p>
+               <p><a href="${link}">Click here to set a new PIN</a> (expires in 30 minutes).</p>
+               <p>If you didn't request this, you can safely ignore this email.</p>`,
+      }).catch(e => console.error('reset-pin email send failed (link is still returned to the app)', e));
+    } else {
+      console.error('Reset requested but GMAIL_USER/GMAIL_APP_PASSWORD are not set -- returning link directly to the app instead.');
+    }
+
+    res.json({ ok: true, link });
   } catch (e) {
     console.error(e);
     res.json(generic); // never leak failure details to the client
